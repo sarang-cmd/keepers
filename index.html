@@ -165,7 +165,7 @@ dl:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',search:'<
 const ic=(n,s=17)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]||''}</svg>`;
 const BASE=[{id:'new',n:'Inbox',col:'#8b93a7'},{id:'keep',n:'Candidates',col:'#34c98a'},{id:'later',n:'Save for later',col:'#f0b13c'},{id:'final',n:'Final cut',col:'#b583ff'},{id:'no',n:'Rejected',col:'#ef6b6b'}];
 const MOODS={Chill:[['Khruangbin','Texas Sun'],['Men I Trust','Show Me How'],['Tycho','A Walk']],Upbeat:[['Fred again..','Marea (We’ve Lost Dancing)'],['Dua Lipa','Houdini'],['Justice','D.A.N.C.E.']],Nostalgic:[['Fleetwood Mac','Dreams'],['Beach House','Space Song'],['The Cinematic Orchestra','To Build a Home']],'Road trip':[['Vampire Weekend','Cape Cod Kwassa Kwassa'],['Foals','My Number'],['Bastille','Pompeii']],Cinematic:[['Hans Zimmer','Time'],['Ólafur Arnalds','Saman'],['M83','Outro']],Summer:[['Caribou','Can’t Do Without You'],['Jungle','Back On 74'],['Glass Animals','Heat Waves']]};
-const DEF={theme:'auto',cell:158,q:2560,jq:.9,par:2,pcache:true};
+const DEF={theme:'auto',cell:158,q:2560,tq:.82,par:2,pcache:true};
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const why=e=>{const m=(e&&(e.message||e.code))||String(e||'unknown error');return m.replace(/\s+/g,' ').slice(0,140)};
 const fmt=n=>n>1048576?(n/1048576).toFixed(n>10485760?0:1)+' MB':n>1024?Math.round(n/1024)+' KB':n+' B';
@@ -374,8 +374,9 @@ async function saveTile(it,canvas){
       const g=tmp.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(canvas,0,0,tmp.width,tmp.height);
       src=tmp;
     }
-    let blob=await new Promise(r=>src.toBlob(r,'image/webp',.82));
-    if(!blob)blob=await new Promise(r=>src.toBlob(r,'image/jpeg',.82));
+    const tq=Math.min(.95,Math.max(.5,+S.set.tq||.82));
+    let blob=await new Promise(r=>src.toBlob(r,'image/webp',tq));
+    if(!blob)blob=await new Promise(r=>src.toBlob(r,'image/jpeg',tq));
     if(tmp){tmp.width=tmp.height=1}
     if(!blob)return null;
     await idbPut('tiles',it.key,{blob,ts:Date.now(),n:blob.size});
@@ -781,8 +782,8 @@ function renderSheet(){
   <div class="sec"><h4>Previews</h4>
     <div class="row"><div class="lab"><b>Full-screen size</b><small>Pixels rendered for the big preview. Smaller is faster and uses less memory; the grid always uses the cached tiles.</small></div>
       <div class="end"><button class="dd sm" data-dd="prev"><span>${esc(DD_LABEL.prev())}</span><span class="car">${ic('skip',14)}</span></button></div></div>
-    <div class="row"><div class="lab"><b>JPEG quality</b><small>${Math.round((+S.set.jq||.9)*100)}% — quality of the converted preview.</small></div>
-      <div class="end"><input id="jq" type="range" min="60" max="98" step="1" value="${Math.round((+S.set.jq||.9)*100)}"></div></div>
+    <div class="row"><div class="lab"><b>Cached tile quality</b><small>${Math.round((+S.set.tq||.82)*100)}% — size against sharpness of the grid tiles. The full-screen view is unaffected.</small></div>
+      <div class="end"><input id="tq" type="range" min="50" max="95" step="1" value="${Math.round((+S.set.tq||.82)*100)}"></div></div>
     <div class="row"><div class="lab"><b>Parallel decoding</b><small>How many HEICs decode at once. Lower if the fan spins up.</small></div>
       <div class="end"><button class="dd sm" data-dd="par"><span>${esc(DD_LABEL.par())}</span><span class="car">${ic('skip',14)}</span></button></div></div>
   </div>
@@ -896,10 +897,10 @@ async function sheetAction(a){
   }
 }
 document.addEventListener('change',e=>{
-  if(e.target.id==='jq'){
-    S.set.jq=(+e.target.value)/100;save();
+  if(e.target.id==='tq'){
+    S.set.tq=(+e.target.value)/100;save();
     const lab=e.target.closest('.row').querySelector('small');
-    if(lab)lab.textContent=Math.round(S.set.jq*100)+'% — quality of the converted preview.';
+    if(lab)lab.textContent=Math.round(S.set.tq*100)+'% — size against sharpness of the grid tiles. The full-screen view is unaffected.';
   }
 });
 document.addEventListener('input',e=>{
