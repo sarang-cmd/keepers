@@ -57,9 +57,9 @@ nav{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:24px;b
 .seg{display:inline-flex;box-shadow:var(--dn);border-radius:16px;padding:4px;gap:2px}.seg button{box-shadow:none;background:none;padding:7px 16px;border-radius:12px}.seg button.on{box-shadow:var(--us);font-weight:600}
 select{background:var(--bg);border:0;box-shadow:var(--dn);border-radius:14px;padding:10px 12px}
 .stage{display:flex;justify-content:center}
-.card{position:relative;width:min(100%,440px);height:min(66vh,640px);background:var(--bg);border-radius:38px;box-shadow:var(--up);touch-action:none;user-select:none;cursor:grab}
+.card{position:relative;width:min(100%,440px);height:min(66vh,640px);background:var(--bg);border-radius:38px;box-shadow:var(--up);touch-action:none;user-select:none;cursor:grab;transition:width .18s ease,height .18s ease}
 .med{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mu);text-align:center;padding:14px}
-.card .med{inset:14px;border-radius:26px;overflow:hidden;background:#0d0e11;box-shadow:inset 0 0 0 1px #0006;color:#aab}
+.card .med{inset:14px;padding:0;border-radius:26px;overflow:hidden;background:#0d0e11;box-shadow:inset 0 0 0 1px #0006;color:#aab}
 .med img,.med video,.med canvas,.cell img,.cell video,.cell canvas{width:100%;height:100%;object-fit:contain;pointer-events:none}.med video{pointer-events:auto}
 .med canvas{image-rendering:auto}
 .cap{position:absolute;left:14px;right:14px;bottom:14px;padding:34px 18px 14px;border-radius:0 0 26px 26px;background:linear-gradient(transparent,#000c);color:#fff;font-size:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
@@ -568,10 +568,46 @@ async function clearPreviewCache(){
   toast('Cached tiles cleared');render();
 }
 
+/* ---------- the card hugs the photo: no letterbox bars ---------- */
+const CARD_PAD=28;                      // .med inset 14px on each side
+function cardCaps(){
+  const card=$('#card'),stage=card&&card.parentElement;
+  const narrow=innerWidth<=820;
+  const h=Math.min(innerHeight*(narrow?.58:.66),narrow?520:640);
+  const w=Math.min(440,Math.max(180,stage?stage.clientWidth:440));
+  return {w,h};
+}
+function fitCard(w,h){
+  const card=$('#card');if(!card||!w||!h)return;
+  const caps=cardCaps();
+  const mw=Math.max(80,caps.w-CARD_PAD),mh=Math.max(80,caps.h-CARD_PAD);
+  const ar=w/h;
+  let aw=mh*ar,ah=mh;
+  if(aw>mw){aw=mw;ah=mw/ar}
+  card.style.width=Math.max(120,Math.round(aw+CARD_PAD))+'px';
+  card.style.height=Math.max(120,Math.round(ah+CARD_PAD))+'px';
+}
+function noteDims(it,w,h,apply){
+  if(!w||!h)return;
+  it.dims={w,h};
+  if(apply&&view==='swipe')fitCard(w,h);
+}
+let cardTick=0;
+addEventListener('resize',()=>{
+  if(cardTick)return;
+  cardTick=requestAnimationFrame(()=>{
+    cardTick=0;
+    if(view!=='swipe'||!$('#card'))return;
+    const it=deck()[idx];
+    if(it&&it.dims)fitCard(it.dims.w,it.dims.h);
+  });
+},{passive:true});
+
 /* ---------- mounting media ---------- */
 function mount(box,it,full){
   const tok=box._t=Symbol();
   const alive=()=>box._t===tok;
+  const dims=(w,h)=>noteDims(it,w,h,full&&alive());
   const put=el=>{if(!alive())return false;box.innerHTML='';box.appendChild(el);return true};
   const fail=msg=>{if(!alive())return;
     box.innerHTML=`<div style="font-size:12px;line-height:1.45">Couldn’t open<br><b style="font-weight:600;word-break:break-word">${esc(it.file.name)}</b>`
@@ -582,6 +618,7 @@ function mount(box,it,full){
     const m=document.createElement('video');
     m.muted=m.loop=m.playsInline=true;m.preload='metadata';
     if(full){m.controls=m.autoplay=true}
+    m.onloadedmetadata=()=>dims(m.videoWidth,m.videoHeight);
     m.onerror=()=>fail('Video codec not supported in this browser (HEVC/H.265 video usually needs Safari).');
     m.src=objUrl(it.key+'|src',it.file)+(full?'':'#t=0.1');
     box.appendChild(m);return;
@@ -589,8 +626,10 @@ function mount(box,it,full){
   box.innerHTML=full?'<div class="spin"></div>':'<div class="skel"></div>';
   isHeif(it).then(heif=>{
     if(!alive())return;
+    if(heif&&!it.dims)heifSize(it.file).then(s=>{if(s&&alive())dims(s.w,s.h)});
     if(!heif){
       const im=new Image();im.decoding='async';im.draggable=false;
+      im.onload=()=>dims(im.naturalWidth,im.naturalHeight);
       im.onerror=()=>{ // mislabelled file? give libheif one shot
         if(!alive())return;
         sniffHeif(it.file).then(h=>{if(!alive())return;h?start():fail('This image format is not readable here.')});
@@ -608,6 +647,7 @@ function mount(box,it,full){
     if(!alive())return;
     if(cached){
       const im=new Image();im.src=cached;im.draggable=false;
+      im.onload=()=>dims(im.naturalWidth,im.naturalHeight);
       put(im);
       if(!full)return;                       // grid: the cached tile *is* the view
     }else if(alive()){
@@ -621,6 +661,7 @@ function mount(box,it,full){
       it.err=null;it.painted=true;
       c.className='shot';
       put(c);
+      dims(c.width,c.height);
       // refresh the small tile for next time, and (in grids) swap the canvas for the
       // cheap cached image so a long scroll doesn't keep dozens of canvases alive
       const keep=res.tile?saveTileBlob(it,res.tile):saveTile(it,c);
@@ -952,7 +993,7 @@ function rSwipe(){
   <div class="mv">Move to:${C.map((c,i)=>i<9&&c.id!==cur?`<button data-a="${c.id}"><kbd>${i+1}</kbd>${esc(c.n)}</button>`:'').join('')}</div>
   <div class="help"><span><kbd>←</kbd>reject</span><span><kbd>→</kbd>candidate</span><span><kbd>Space</kbd>later</span><span><kbd>↑</kbd>final</span><span><kbd>↓</kbd>skip</span><span><kbd>Z</kbd>undo</span><span><kbd>/</kbd>search</span><span><kbd>,</kbd>settings</span></div>`
   :`<div class="empty"><h3>${search?'No matches for “'+esc(search)+'”':'This collection is empty'}</h3><p>${search?'Try a different name or clear the search.':'Pick another collection on the left, or switch the filter.'}</p></div>`;
-  if(!it)return;mount($('#med'),it,true);d.slice(idx+1,idx+3).forEach(prefetchTile);drag($('#card'));
+  if(!it)return;mount($('#med'),it,true);if(it.dims)fitCard(it.dims.w,it.dims.h);d.slice(idx+1,idx+3).forEach(prefetchTile);drag($('#card'));
 }
 function drag(c){
   let sx,sy,on=0;const T=110,op=(id,v)=>{const e=$(id);if(e)e.style.opacity=Math.min(1,Math.max(0,v/T))};
