@@ -460,7 +460,7 @@ async function saveTile(it,canvas){
 async function clearPreviewCache(){
   await idbClear('tiles');tileIdx=null;
   [...objUrls.keys()].forEach(k=>{if(k.endsWith('|tile')){URL.revokeObjectURL(objUrls.get(k));objUrls.delete(k)}});
-  items.forEach(i=>i.tilePrefetched=false);
+  items.forEach(i=>i.prefetching=null);
   toast('Cached tiles cleared');render();
 }
 
@@ -552,8 +552,9 @@ async function precacheAll(){
     if(pc.cancel)break;
     try{
       if(await isHeif(it)){
-        if(await tileUrl(it))pc.ok++;
-        else{await prefetchTile(it);pc.ok++}
+        if(await tileUrl(it)){pc.ok++}
+        else if(await prefetchTile(it)){pc.ok++}
+        else{pc.fail++}
       }
     }catch(e){pc.fail++}
     pc.done++;pcUI();
@@ -565,11 +566,23 @@ async function precacheAll(){
   else toast('Cached '+pc.ok+' of '+pc.total+' photos for offline use');
 }
 function stopPrecache(){pc.cancel=true}
+// decode one tile in the background. Returns a tile URL, or null on failure.
+// Concurrent callers share the same promise, so a tile never decodes twice.
 async function prefetchTile(it){
-  if(!S.set.pcache||it.vid||it.tilePrefetched)return;
-  it.tilePrefetched=true;
-  if(!(await isHeif(it))||await tileUrl(it))return;
-  try{await slot();let c;try{c=await paint(it,THUMB)}finally{free()}if(c)await saveTile(it,c)}catch(e){}
+  if(!S.set.pcache||it.vid)return null;
+  const have=await tileUrl(it);
+  if(have)return have;
+  if(it.prefetching)return it.prefetching;
+  it.prefetching=(async()=>{
+    try{
+      if(!(await isHeif(it)))return null;
+      await slot();
+      let c;try{c=await paint(it,THUMB)}finally{free()}
+      return c?await saveTile(it,c):null;
+    }catch(e){return null}
+    finally{it.prefetching=null}
+  })();
+  return it.prefetching;
 }
 
 /* ---------- custom dropdowns ---------- */
@@ -967,7 +980,7 @@ document.addEventListener('click',e=>{
     items.forEach(i=>{if(i.st===id)setSt(i,'new')});
     S.cols=(S.cols||[]).filter(c=>c.id!==id);if(cur===id)cur='new';save();return render()}
   if(el=g('[data-retry]')){e.stopPropagation();const m=by(),it=m[el.dataset.retry];if(!it)return;
-    it.err=null;it.painted=false;it.tilePrefetched=false;it.heif=undefined;
+    it.err=null;it.painted=false;it.prefetching=null;it.heif=undefined;
     const box=el.closest('.med');
     return box?mount(box,it,box.closest('.cell')?false:true):render()}
   if(el=g('[data-c]')){cur=el.dataset.c;idx=0;sel.clear();search='';return render()}
@@ -1014,7 +1027,7 @@ async function sheetAction(a){
     await openDB();
     try{DB&&DB.transaction('media','readwrite').objectStore('media').clear()}catch(e){}
     mediaIdx=[];S={};S.set={...DEF};finals=[];notes='';hist=[];sel.clear();
-    items.forEach(i=>{i.st='new';i.painted=false;i.tilePrefetched=false});
+    items.forEach(i=>{i.st='new';i.painted=false;i.prefetching=null});
     applyTheme();applyCss();closeSheet();render();toast('Reset. Starting fresh');
     return;
   }
