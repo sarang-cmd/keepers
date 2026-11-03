@@ -16,7 +16,7 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 - **Collections** — Inbox, Candidates, Save for later, Final cut, Rejected, plus your own. Counts and progress stay visible.
 - **Final cut** — reorder slides, cap is 20 (Instagram carousel), copy filenames in order, get music ideas, keep notes/caption.
 - **Search and filters** — filter by photos / videos / HEIC only, and search by filename.
-- **Settings** — theme (auto/light/dark), thumbnail size, full-screen preview size, JPEG-free rendering quality, parallel decoding, cache controls.
+- **Settings** — theme (auto/light/dark), thumbnail size, full-screen preview size, cached tile quality, parallel decoding, cache controls (usage in MB, clear, pre-cache the decoder).
 
 ## What you can take out of it
 
