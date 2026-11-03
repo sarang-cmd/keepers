@@ -1,0 +1,6 @@
+# nothing generated lives here, but keep the repo tidy
+.DS_Store
+Thumbs.db
+*.zip
+*-sort-map.json
+node_modules/
