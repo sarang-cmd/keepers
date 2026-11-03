@@ -72,6 +72,10 @@ select{background:var(--bg);border:0;box-shadow:var(--dn);border-radius:14px;pad
 .help{color:var(--mu);font-size:12px;text-align:center;margin-top:22px;display:flex;gap:6px 14px;justify-content:center;flex-wrap:wrap}
 kbd{border-radius:7px;padding:1px 7px;font:inherit;font-size:11px;box-shadow:var(--us);margin-right:4px;color:var(--tx)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell,158px),1fr));gap:22px}
+.vgrid{position:relative;width:100%}
+.vgrid .cell{position:absolute;left:0;top:0;aspect-ratio:auto;contain:layout paint style;will-change:transform}
+.vcell .med{transition:transform .18s ease}
+.vcell:hover .med{transform:translateY(-3px)}
 .cell{position:relative;aspect-ratio:1;border-radius:22px;box-shadow:var(--dn);cursor:pointer}
 .cell .med{inset:8px;border-radius:15px;overflow:hidden;background:#0d0e11;padding:4px;font-size:11px}
 .cell img,.cell video,.cell canvas{object-fit:cover}
@@ -181,7 +185,7 @@ nav{background:linear-gradient(180deg,#ffffff40,transparent)}
 .dd,.search{background:linear-gradient(180deg,#ffffff8c,var(--bg));border:1px solid var(--line)}
 .dd:hover{box-shadow:var(--us),0 8px 18px -14px var(--ac)}
 .cell{transition:transform .2s ease,box-shadow .2s ease}
-.cell:hover{transform:translateY(-3px)}
+.grid .cell:hover{transform:translateY(-3px)}
 .cell.sel{box-shadow:var(--dn),0 0 0 3px var(--ac),0 20px 34px -22px var(--ac)}
 .cell .med img,.cell .med canvas,.card .med img,.card .med canvas{animation:pop .28s ease both}
 @keyframes pop{from{opacity:.2;transform:scale(.985)}}
@@ -328,7 +332,8 @@ function objUrl(key,blob,force){
   return u;
 }
 
-/* decoder: downloaded once, then served from the local cache (works offline) */
+/* decoder: downloaded once, then cached locally (works offline). The same text
+   feeds the worker and the main thread fallback. */
 function injectScript(code){
   return new Promise(ok=>{
     const u=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));
@@ -338,13 +343,12 @@ function injectScript(code){
     document.head.appendChild(s);
   });
 }
-function heicLib(){
-  if(window.HeicTo)return Promise.resolve(window.HeicTo);
-  if(heicLibP)return heicLibP;
-  heicLibP=(async()=>{
-    decState='loading';
+let decSrcP=null;
+function decoderSource(){
+  if(decSrcP)return decSrcP;
+  decSrcP=(async()=>{
     const cached=await idbGet('assets',DEC_VER);
-    if(typeof cached==='string'&&cached.length>1e5&&await injectScript(cached)){decState='cached';decFrom='local cache';return window.HeicTo}
+    if(typeof cached==='string'&&cached.length>1e5){decState='cached';decFrom='local cache';return cached}
     for(const url of HEIC_CDN){
       try{
         const r=await fetch(url,{cache:'force-cache'});
@@ -352,14 +356,94 @@ function heicLib(){
         const code=await r.text();
         if(code.length<1e5)continue;
         await idbPut('assets',DEC_VER,code);
-        if(await injectScript(code)){decState='ready';decFrom=url.includes('jsdelivr')?'cdn.jsdelivr.net':'unpkg.com';return window.HeicTo}
+        decState='ready';decFrom=url.includes('jsdelivr')?'cdn.jsdelivr.net':'unpkg.com';
+        return code;
       }catch(e){}
     }
     decState='failed';
     throw new Error('HEIC decoder could not be downloaded (offline or CDN blocked)');
   })();
+  decSrcP.catch(()=>{decSrcP=null});
+  return decSrcP;
+}
+function heicLib(){
+  if(window.HeicTo)return Promise.resolve(window.HeicTo);
+  if(heicLibP)return heicLibP;
+  heicLibP=(async()=>{
+    const code=await decoderSource();
+    if(!window.HeicTo&&!(await injectScript(code)))throw new Error('HEIC decoder failed to start');
+    return window.HeicTo;
+  })();
   heicLibP.catch(()=>{heicLibP=null});
   return heicLibP;
+}
+
+/* ---------- decode worker: libheif off the main thread ---------- */
+const stats={worker:0,main:0};
+try{window.__keepers={stats}}catch(e){}
+const WORKER_GLUE = `
+self.onmessage=async function(e){
+  var d=e.data;
+  try{
+    if(!self.HeicTo) throw new Error('decoder missing in worker');
+    var opt={};
+    if(d.w&&d.h&&Math.max(d.w,d.h)>d.maxEdge){
+      var k=d.maxEdge/Math.max(d.w,d.h);
+      opt.resizeWidth=Math.max(1,Math.round(d.w*k));
+      opt.resizeHeight=Math.max(1,Math.round(d.h*k));
+      opt.resizeQuality='high';
+    }
+    var bmp=await self.HeicTo({blob:d.file,type:'bitmap',options:opt});
+    var out={id:d.id,ok:true,width:bmp.width,height:bmp.height};
+    out.bitmap=bmp;
+    var transfer=[bmp];
+    if(d.tileEdge){
+      var sc=Math.min(1,d.tileEdge/Math.max(bmp.width,bmp.height));
+      var oc=new OffscreenCanvas(Math.max(1,Math.round(bmp.width*sc)),Math.max(1,Math.round(bmp.height*sc)));
+      var g2=oc.getContext('2d');
+      g2.imageSmoothingQuality='high';
+      g2.drawImage(bmp,0,0,oc.width,oc.height);
+      var q=d.tileQ||0.82;
+      try{out.tile=await oc.convertToBlob({type:'image/webp',quality:q})}
+      catch(err){out.tile=await oc.convertToBlob({type:'image/jpeg',quality:q})}
+    }
+    self.postMessage(out,transfer);
+  }catch(err){
+    self.postMessage({id:d.id,ok:false,err:String((err&&(err.message||err))||err)});
+  }
+};
+`;
+let wk=null,wkP=null,wkSeq=0;const wkPend=new Map();
+function workerInstance(){
+  if(wk)return Promise.resolve(wk);
+  if(wkP)return wkP;
+  wkP=(async()=>{
+    if(typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined')throw new Error('worker path unavailable');
+    const code=await decoderSource();
+    const url=URL.createObjectURL(new Blob([code+'\n'+WORKER_GLUE],{type:'text/javascript'}));
+    const w=new Worker(url);
+    w.onmessage=e=>{
+      const m=e.data,p=wkPend.get(m.id);if(!p)return;
+      wkPend.delete(m.id);
+      m.ok?p.ok(m):p.no(new Error(m.err||'decode failed'));
+    };
+    w.onerror=()=>{
+      wkPend.forEach(p=>p.no(new Error('worker error')));
+      wkPend.clear();wk=null;wkP=null;
+    };
+    wk=w;return w;
+  })();
+  wkP.catch(()=>{wkP=null});
+  return wkP;
+}
+function workerDecode(file,opt){
+  return new Promise((res,rej)=>{
+    workerInstance().then(w=>{
+      const id=++wkSeq;
+      wkPend.set(id,{ok:res,no:rej});
+      w.postMessage({id,file,maxEdge:opt.maxEdge,tileEdge:opt.tileEdge||0,tileQ:opt.tileQ||0,w:opt.w||0,h:opt.h||0});
+    }).catch(rej);
+  });
 }
 
 /* format + size detection */
@@ -394,15 +478,27 @@ async function heifBitmap(it,maxEdge){
   }
   return lib({blob:it.file,type:'bitmap',options:opt});
 }
-async function paint(it,maxEdge){
+async function paint(it,maxEdge,tileSpec){
+  const size=await heifSize(it.file);
+  try{
+    const r=await workerDecode(it.file,{maxEdge,tileEdge:tileSpec?THUMB:0,tileQ:tileSpec?tileQuality():0,w:size?size.w:0,h:size?size.h:0});
+    stats.worker++;
+    const c=document.createElement('canvas');
+    c.width=r.width;c.height=r.height;
+    c.getContext('2d').drawImage(r.bitmap,0,0);
+    if(r.bitmap.close)r.bitmap.close();
+    return {canvas:c,tile:r.tile||null,thread:'worker'};
+  }catch(e){}
   const bmp=await heifBitmap(it,maxEdge);
+  stats.main++;
   try{
     const c=document.createElement('canvas');
     c.width=bmp.width;c.height=bmp.height;
     const g=c.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(bmp,0,0);
-    return c;
+    return {canvas:c,tile:null,thread:'main'};
   }finally{bmp.close&&bmp.close()}
 }
+const tileQuality=()=>Math.min(.95,Math.max(.5,+S.set.tq||.82));
 
 /* ---------- tile cache (small, optional) ---------- */
 let tileIdx=null;
@@ -447,11 +543,19 @@ async function saveTile(it,canvas){
       const g=tmp.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(canvas,0,0,tmp.width,tmp.height);
       src=tmp;
     }
-    const tq=Math.min(.95,Math.max(.5,+S.set.tq||.82));
+    const tq=tileQuality();
     let blob=await new Promise(r=>src.toBlob(r,'image/webp',tq));
     if(!blob)blob=await new Promise(r=>src.toBlob(r,'image/jpeg',tq));
     if(tmp){tmp.width=tmp.height=1}
     if(!blob)return null;
+    await idbPut('tiles',it.key,{blob,ts:Date.now(),n:blob.size});
+    trimTiles();
+    return objUrl(it.key+'|tile',blob,true);
+  }catch(e){return null}
+}
+async function saveTileBlob(it,blob){
+  if(!S.set.pcache||!DB||!blob)return null;
+  try{
     await idbPut('tiles',it.key,{blob,ts:Date.now(),n:blob.size});
     trimTiles();
     return objUrl(it.key+'|tile',blob,true);
@@ -511,14 +615,16 @@ function mount(box,it,full){
     }
     try{
       await slot();
-      let c;try{c=await paint(it,edge)}finally{free()}
+      let res;try{res=await paint(it,edge,{cacheTile:true})}finally{free()}
       if(!alive())return;
+      const c=res.canvas;
       it.err=null;it.painted=true;
       c.className='shot';
       put(c);
       // refresh the small tile for next time, and (in grids) swap the canvas for the
       // cheap cached image so a long scroll doesn't keep dozens of canvases alive
-      saveTile(it,c).then(u=>{
+      const keep=res.tile?saveTileBlob(it,res.tile):saveTile(it,c);
+      keep.then(u=>{
         if(u&&!full&&alive()){const im=new Image();im.src=u;im.draggable=false;put(im)}
       });
     }catch(e){
@@ -577,8 +683,9 @@ async function prefetchTile(it){
     try{
       if(!(await isHeif(it)))return null;
       await slot();
-      let c;try{c=await paint(it,THUMB)}finally{free()}
-      return c?await saveTile(it,c):null;
+      let res;try{res=await paint(it,THUMB,{cacheTile:true})}finally{free()}
+      if(!res)return null;
+      return res.tile?saveTileBlob(it,res.tile):saveTile(it,res.canvas);
     }catch(e){return null}
     finally{it.prefetching=null}
   })();
@@ -861,12 +968,66 @@ function lazy(root){
   }),{rootMargin:'300px'});
   root.querySelectorAll('.cell').forEach(c=>io.observe(c));
 }
+let vlist=[],vcells=new Map(),vgeom={cols:0,cw:0,rowH:0,gap:22};
+const GRID_GAP=22,GRID_OVER=2;
 function rGrid(){
   const d=deck();
-  $('#body').innerHTML=d.length?`<div class="grid" id="g">${d.slice(0,lim).map(i=>`<div class="cell ${sel.has(i.key)?'sel':''}" data-k="${esc(i.key)}"><div class="med"></div><span class="tick">${ic('check',13)}</span><button class="open" data-open="${esc(i.key)}" title="Open in swipe view">${ic('expand',14)}</button></div>`).join('')}</div>${d.length>lim?`<p style="text-align:center"><button id="more">Show more (${d.length-lim} left)</button></p>`:''}`
-  :`<div class="empty"><h3>${search?'No matches':'Nothing here yet'}</h3><p>${search?'Clear the search to see everything.':'Items you sort into this collection will show up here.'}</p></div>`;
-  if(d.length)lazy($('#g'));
+  if(!d.length){
+    vlist=[];vcells.clear();
+    $('#body').innerHTML=`<div class="empty"><h3>${search?'No matches':'Nothing here yet'}</h3><p>${search?'Clear the search to see everything.':'Items you sort into this collection will show up here.'}</p></div>`;
+    return;
+  }
+  vlist=d;vcells=new Map();
+  $('#body').innerHTML='<div id="g" class="vgrid"></div>';
+  layoutGrid();
 }
+let vRetry=0;
+function layoutGrid(){
+  const g=$('#g');if(!g||!vlist.length)return;
+  const W=g.clientWidth||$('#body').clientWidth;
+  if(!W){if(vRetry++<20)requestAnimationFrame(layoutGrid);return}
+  vRetry=0;
+  const cellMin=Math.max(96,+S.set.cell||158);
+  const cols=Math.max(1,Math.floor((W+GRID_GAP)/(cellMin+GRID_GAP)));
+  const cw=(W-GRID_GAP*(cols-1))/cols;
+  const rowH=cw+GRID_GAP;
+  const rows=Math.ceil(vlist.length/cols);
+  const h=Math.max(0,+(rows*rowH-GRID_GAP).toFixed(2));
+  if(g.style.height!==h+'px')g.style.height=h+'px';
+  // column count changed: old cells sit on stale rows, so drop them and rebuild
+  if(vgeom.cols!==cols||vgeom.cw!==cw){
+    for(const el of vcells.values())el.remove();
+    vcells.clear();
+  }
+  const gTop=g.getBoundingClientRect().top+window.scrollY;
+  const vTop=window.scrollY,vBot=vTop+innerHeight;
+  const rowA=Math.min(Math.max(0,Math.floor((vTop-gTop)/rowH)-GRID_OVER),Math.max(0,rows-1));
+  const rowB=Math.min(rows,Math.max(1,Math.ceil((vBot-gTop)/rowH)+GRID_OVER));
+  const start=rowA*cols;
+  const end=Math.min(vlist.length,Math.max(rowB*cols,start+cols*3));
+  vgeom={cols,cw,rowH,gap:GRID_GAP};
+  for(const [i,el] of [...vcells]) if(i<start||i>=end||!el.isConnected){el.remove();vcells.delete(i)}
+  for(let i=start;i<end;i++){
+    if(vcells.has(i))continue;
+    const it=vlist[i];if(!it)continue;
+    const r=Math.floor(i/cols),c=i%cols;
+    const el=document.createElement('div');
+    el.className='cell vcell'+(sel.has(it.key)?' sel':'');
+    el.dataset.k=it.key;
+    el.style.width=cw+'px';el.style.height=cw+'px';
+    el.style.transform=`translate3d(${c*(cw+GRID_GAP)}px,${r*rowH}px,0)`;
+    el.innerHTML=`<div class="med"></div><span class="tick">${ic('check',13)}</span><button class="open" data-open="${esc(it.key)}" title="Open in swipe view">${ic('expand',14)}</button>`;
+    g.appendChild(el);vcells.set(i,el);
+    mount(el.querySelector('.med'),it,false);
+  }
+}
+let gridTick=0;
+addEventListener('scroll',()=>{
+  if(!$('#g')||gridTick)return;
+  gridTick=requestAnimationFrame(()=>{gridTick=0;layoutGrid()});
+},{passive:true});
+addEventListener('resize',()=>{if($('#g'))layoutGrid()},{passive:true});
+
 function rFinal(){
   const m=by(),n=finals.length,list=finals.map(k=>m[k]).filter(Boolean);
   $('#body').innerHTML=`<div class="two"><div><div class="panel"><h3>Carousel order <span style="color:var(--mu);font-weight:400">&nbsp;<b class="${n>20?'over':''}">${n}</b> of 20</span></h3><p style="color:var(--mu);margin:0 0 20px;font-size:12px">Instagram carousels hold up to 20 slides. Slide 1 is your cover.</p>
