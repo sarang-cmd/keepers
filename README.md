@@ -12,7 +12,7 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 ## What it does
 
 - **Swipe view**, keyboard or touch: `←` reject, `→` candidate, `Space` later, `↑` final cut, `↓` skip, `Z` undo. Drag the card if you prefer gestures.
-- **Grid view**, lazy-loaded tiles, click to select a bunch, then move them all at once. Undo from the toast.
+- **Grid view**, virtualized: only the rows on screen live in the DOM, so a folder of a thousand photos scrolls at the same cost as a folder of thirty. Click to select a bunch, then move them all at once. Undo from the toast.
 - **Collections**: Inbox, Candidates, Save for later, Final cut, Rejected, plus your own. Counts and progress stay visible.
 - **Final cut**, reorder slides, cap is 20 (Instagram carousel), copy filenames in order, get music ideas, keep notes/caption.
 - **Search and filters**, filter by photos / videos / HEIC only, and search by filename.
@@ -34,7 +34,8 @@ The toolbar `↓` button zips just the collection you are looking at.
 Browsers can't decode HEIC except Safari, so Keepers uses [libheif](https://github.com/strukturag/libheif) compiled to WASM (via [`heic-to`](https://github.com/hoppergee/heic-to)).
 
 - The decoder (~3 MB) is downloaded **once**, then stored in IndexedDB and served from there, so HEIC keeps working offline.
-- After a folder opens, Keepers pre-caches every photo in the background: one small tile per HEIC. A progress row in the sidebar shows the count and carries a stop button.
+- After a folder opens, Keepers pre-caches every photo in the background: one small tile per HEIC, built inside the worker. A progress row in the sidebar shows the count and carries a stop button.
+- Decoding runs in a **Web Worker**, so libheif never blocks the interface. The worker hands back a ready `ImageBitmap` and the small cached tile in one message. Browsers without `OffscreenCanvas` fall back to decoding on the main thread automatically.
 - **Viewing never converts anything.** libheif hands back pixels and they are painted on a `<canvas>` at exactly the size needed. No JPEG round trip, no intermediate file, no full size copy in memory for 48 MP shots.
 - The only encoded artifact is a small cached tile (≤ 480 px, roughly 30 KB per photo) so a grid of hundreds of HEICs reopens instantly and works with no network at all.
 - Large files are decoded straight to display size (`ispe` box is read first), which keeps a 48 MP photo from blowing up a tab's memory.
@@ -69,7 +70,7 @@ Sorting state persists per browser, so you can close the tab and come back.
 
 ## Notes on the source
 
-Single HTML document: inline CSS, inline JS, inline SVG data-URI favicon. The ZIP writer is a ~60 line store-only implementation (CRC32, local headers, central directory) so there is nothing to load at runtime. Swipe actions patch counters in place instead of rebuilding the shell.
+Single HTML document: inline CSS, inline JS, inline SVG data-URI favicon. The ZIP writer is a ~60 line store-only implementation (CRC32, local headers, central directory) so there is nothing to load at runtime. Swipe actions patch counters in place instead of rebuilding the shell. The grid keeps a translated window of cells around the viewport and recycles them on scroll, and HEIC work is posted to a worker that owns its own copy of the decoder.
 
 ## License
 
