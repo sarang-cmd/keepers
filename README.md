@@ -11,7 +11,7 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 
 ## What it does
 
-- **Swipe view**, keyboard or touch: `←` reject, `→` candidate, `Space` later, `↑` final cut, `↓` skip, `Z` undo. Drag the card if you prefer gestures.
+- **Swipe view**, keyboard or touch, with a card that fits the photo instead of the other way round: 4:3 stays 4:3, panoramas get a wide card, portraits get a tall one, and video sizes itself from the clip's own metadata. `←` reject, `→` candidate, `Space` later, `↑` final cut, `↓` skip, `Z` undo. Drag the card if you prefer gestures.
 - **Grid view**, virtualized: only the rows on screen live in the DOM, so a folder of a thousand photos scrolls at the same cost as a folder of thirty. Click to select a bunch, then move them all at once. Undo from the toast.
 - **Collections**: Inbox, Candidates, Save for later, Final cut, Rejected, plus your own. Counts and progress stay visible.
 - **Final cut**, reorder slides, cap is 20 (Instagram carousel), copy filenames in order, get music ideas, keep notes/caption.
