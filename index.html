@@ -789,7 +789,7 @@ function renderSheet(){
   </div>
 
   <div class="sec"><h4>Offline cache</h4>
-    <div class="row"><div class="lab"><b>Keep converted previews</b><small>Stores decoded HEIC previews in this browser, so reopening the same folder is instant and works offline.</small></div>
+    <div class="row"><div class="lab"><b>Keep cached tiles</b><small>Stores one small tile per photo so grids come back instantly and work offline. Viewing itself never converts anything.</small></div>
       <div class="end"><button class="sw" data-toggle="pcache" aria-pressed="${S.set.pcache?'true':'false'}"></button></div></div>
     <div class="row"><div class="lab"><b>Cached tiles</b><small id="cacheInfo">Checking…</small></div>
       <div class="end"><button data-act="clearCache" class="dgr">${ic('trash',15)} Clear</button></div></div>
