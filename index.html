@@ -15,12 +15,22 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#dde2ea;--hi:#fbfcff;--lo:#b4bccb;--tx:#272d3a;--mu:#5a6376;--ac:#d9531e;
---up:7px 7px 16px var(--lo),-7px -7px 16px var(--hi);--us:4px 4px 9px var(--lo),-4px -4px 9px var(--hi);--dn:inset 5px 5px 10px var(--lo),inset -5px -5px 10px var(--hi)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#262a32;--hi:#31363f;--lo:#1a1d23;--tx:#e9ecf2;--mu:#98a0b0;--ac:#ff8a4c}}
-:root[data-theme="dark"]{--bg:#262a32;--hi:#31363f;--lo:#1a1d23;--tx:#e9ecf2;--mu:#98a0b0;--ac:#ff8a4c}
+--bg:#dde3ee;--hi:#ffffff;--lo:#adb8cb;--tx:#1c2330;--mu:#596377;--ac:#e8551d;--ac2:#ff9a5c;--cool:#5f6bff;
+--grad:linear-gradient(135deg,#ffa267 0%,#e8551d 100%);--gradc:linear-gradient(135deg,#8b96ff 0%,#4f5cff 100%);
+--line:#ffffffcc;--glass:rgba(223,229,239,.82);--glow:0 18px 38px -22px rgba(140,58,18,.55);
+--up:8px 8px 20px #b8c2d4,-8px -8px 20px #ffffff;--us:4px 4px 10px #bcc6d8,-4px -4px 10px #ffffff;--dn:inset 4px 4px 9px #bcc6d8,inset -4px -4px 9px #ffffff}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#20242c;--hi:#2b303a;--lo:#14171c;--tx:#eef1f7;--mu:#9aa3b4;--ac:#ff8f52;--ac2:#ffc39a;--cool:#818cff;
+--line:#ffffff1f;--glass:rgba(32,36,44,.84);--glow:0 18px 38px -20px #000000aa;
+--up:8px 8px 20px #14171c,-8px -8px 20px #2b303a;--us:4px 4px 10px #14171c,-4px -4px 10px #2b303a;--dn:inset 4px 4px 9px #14171c,inset -4px -4px 9px #2b303a}}
+:root[data-theme="dark"]{--bg:#20242c;--hi:#2b303a;--lo:#14171c;--tx:#eef1f7;--mu:#9aa3b4;--ac:#ff8f52;--ac2:#ffc39a;--cool:#818cff;
+--line:#ffffff1f;--glass:rgba(32,36,44,.84);--glow:0 18px 38px -20px #000000aa;
+--up:8px 8px 20px #14171c,-8px -8px 20px #2b303a;--us:4px 4px 10px #14171c,-4px -4px 10px #2b303a;--dn:inset 4px 4px 9px #14171c,inset -4px -4px 9px #2b303a}
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;font-optical-sizing:auto;min-height:100%}
+body{margin:0;color:var(--tx);font:14px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;font-optical-sizing:auto;min-height:100%;position:relative;
+background:radial-gradient(1200px 820px at 6% -10%,#ffffffd0,transparent 62%),radial-gradient(900px 620px at 100% 2%,#ffd8c4b8,transparent 58%),radial-gradient(900px 900px at 46% 120%,#ccd7ffb0,transparent 62%),var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;background-image:radial-gradient(#3a4a6b26 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(135% 90% at 50% 0%,#000 30%,transparent 78%);mask-image:radial-gradient(135% 90% at 50% 0%,#000 30%,transparent 78%)}
+:root[data-theme="dark"] body,html[data-theme="dark"] body{background:radial-gradient(1100px 760px at 8% -10%,#39414fbb,transparent 60%),radial-gradient(900px 620px at 100% 0,#5a3120a0,transparent 56%),radial-gradient(820px 820px at 48% 118%,#2a3463aa,transparent 62%),var(--bg)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:radial-gradient(1100px 760px at 8% -10%,#39414fbb,transparent 60%),radial-gradient(900px 620px at 100% 0,#5a3120a0,transparent 56%),radial-gradient(820px 820px at 48% 118%,#2a3463aa,transparent 62%),var(--bg)}}
 button,select,input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--ac);outline-offset:3px}
 button{background:var(--bg);border:0;border-radius:14px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--us);transition:box-shadow .15s}
@@ -139,12 +149,75 @@ nav{flex-direction:row;overflow-x:auto}.col{width:auto;white-space:nowrap}
 .search input{width:96px}.search{flex:1;min-width:150px}.dd{max-width:160px}.card{height:min(58vh,520px);border-radius:30px}
 .sheet .pane{padding:20px 18px 14px;border-radius:26px}.menu{max-width:min(320px,92vw)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- visual layer ---------- */
+.shell,.hero,#bulk,.sheet,.toast{position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:10px;font-size:21px}
+.brand .mark{width:30px;height:30px;border-radius:11px;background:var(--grad);display:grid;place-items:center;color:#fff;flex:none;box-shadow:var(--glow),inset 0 1px 0 #ffffff66}
+.hero{overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.45;pointer-events:none;z-index:0}
+.blob.b1{width:min(46vw,430px);height:min(46vw,430px);background:#ff9a5c;top:6%;left:4%;animation:float1 22s ease-in-out infinite}
+.blob.b2{width:min(42vw,400px);height:min(42vw,400px);background:#7c88ff;bottom:6%;right:5%;animation:float1 26s ease-in-out infinite reverse}
+@keyframes float1{50%{transform:translate3d(34px,-30px,0) scale(1.1)}}
+.hero>div.in{position:relative;z-index:1;background:linear-gradient(160deg,#ffffffd9,#ffffff8c);border:1px solid var(--line);backdrop-filter:blur(10px);box-shadow:var(--up),var(--glow)}
+:root[data-theme="dark"] .hero>div.in{background:linear-gradient(160deg,#2c323de6,#20242ce0)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .hero>div.in{background:linear-gradient(160deg,#2c323de6,#20242ce0)}}
+.hero h1{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:4px}
+.hero .pri{background:var(--grad);color:#fff;box-shadow:0 16px 32px -18px var(--ac),inset 0 1px 0 #ffffff55}
+.prog div{background:var(--grad);position:relative;overflow:hidden}
+.prog div::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 28%,#ffffff99 50%,transparent 72%);animation:shine 2.8s linear infinite}
+@keyframes shine{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
+.col{border-left:3px solid transparent;transition:border-color .18s,box-shadow .18s,color .18s}
+.col.on{border-left-color:var(--ac)}
+.col.on i{box-shadow:0 0 10px currentColor,inset 1px 1px 2px #ffffff80}
+.col:hover{border-left-color:var(--lo)}
+nav{background:linear-gradient(180deg,#ffffff40,transparent)}
+:root[data-theme="dark"] nav{background:linear-gradient(180deg,#ffffff0a,transparent)}
+.main>.top{position:sticky;top:10px;z-index:16;margin:0 0 20px;padding:10px 12px;border-radius:22px;
+ background:linear-gradient(180deg,var(--glass),var(--glass));backdrop-filter:blur(14px) saturate(1.15);
+ border:1px solid var(--line);box-shadow:var(--us),0 22px 40px -34px #1b2436}
+.top h2{display:flex;align-items:center;gap:10px}
+.top .cdot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 12px currentColor}
+.dd,.search{background:linear-gradient(180deg,#ffffff8c,var(--bg));border:1px solid var(--line)}
+.dd:hover{box-shadow:var(--us),0 8px 18px -14px var(--ac)}
+.cell{transition:transform .2s ease,box-shadow .2s ease}
+.cell:hover{transform:translateY(-3px)}
+.cell.sel{box-shadow:var(--dn),0 0 0 3px var(--ac),0 20px 34px -22px var(--ac)}
+.cell .med img,.cell .med canvas,.card .med img,.card .med canvas{animation:pop .28s ease both}
+@keyframes pop{from{opacity:.2;transform:scale(.985)}}
+.card{box-shadow:var(--up),0 34px 64px -46px #0d1626}
+.rnd:hover{transform:translateY(-2px)}
+.rnd,.col,.dd,button{transition:transform .16s ease,box-shadow .16s ease,color .16s ease,border-color .16s ease}
+.chips .on{background:var(--grad);color:#fff;box-shadow:0 12px 24px -16px var(--ac)}
+.panel{background:linear-gradient(180deg,#ffffff3d,transparent)}
+.sheet .pane{background:linear-gradient(180deg,#ffffff38,transparent),var(--bg);border:1px solid var(--line)}
+.sec h4{display:flex;align-items:center;gap:8px}
+.sec h4::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--grad);flex:none}
+.row:hover{background:linear-gradient(90deg,#ffffff33,transparent)}
+.song a:hover{text-decoration:underline}
+#bulk{backdrop-filter:blur(12px);border:1px solid var(--line);background:linear-gradient(180deg,var(--glass),var(--bg))}
+.spin{width:26px;height:26px;border-radius:50%;flex:none;
+ background:conic-gradient(from 0deg,transparent 0 30%,var(--ac));
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 0);
+ animation:spin .85s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+.skel{width:64%;height:64%;max-width:220px;max-height:220px;border-radius:18px;
+ background:linear-gradient(100deg,#ffffff12 22%,#ffffff2e 44%,#ffffff12 66%);background-size:220% 100%;animation:shimmer 1.5s linear infinite}
+@keyframes shimmer{to{background-position:-220% 0}}
+.pc{display:flex;align-items:center;gap:8px;padding:0 6px;color:var(--mu);font-size:11.5px;margin-top:-4px}
+.pc #pclab{white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc .pcbar{flex:1;height:6px;border-radius:6px;box-shadow:var(--dn);padding:1px;overflow:hidden}
+.pc .pcbar i{display:block;height:100%;border-radius:5px;background:var(--gradc);width:0;transition:width .3s}
+.pc button{padding:2px 6px;border-radius:8px;font-size:11px;box-shadow:var(--us)}
+.toast{background:linear-gradient(180deg,#20262f,#14181e);border:1px solid #ffffff1f;width:max-content;max-width:min(92vw,560px)}
+@media(prefers-reduced-motion:reduce){.blob,.prog div::after,.spin,.skel,.cell .med img,.cell .med canvas{animation:none!important}}
+@media(max-width:820px){.main>.top{top:6px;padding:8px 10px;border-radius:18px}}
 </style>
 </head>
 <body>
-<div id="load" class="hero"><div class="in">
+<div id="load" class="hero"><div class="blob b1"></div><div class="blob b2"></div><div class="in">
   <h1>Keepers</h1>
-  <p>Sort a whole trip into collections, then build your final carousel. Files are read straight from your disk and never uploaded. HEIC/HEIF is decoded straight onto the screen in your browser — no conversion step — and the tiles are cached so it keeps working offline.</p>
+  <p>Sort a whole trip into collections, then build your final carousel. Files are read straight from your disk and never uploaded. HEIC/HEIF is painted straight onto the screen in your browser. No conversion step. Tiles are cached, so your dump keeps working offline.</p>
   <div><button class="pri" id="pickDir">Choose folder</button> <button id="pickFiles">Choose files</button></div>
   <p id="msg" style="font-size:12px"></p>
   <p style="font-size:12px"><button id="heroImport" style="box-shadow:none;background:none;padding:4px 8px;color:var(--ac);font-weight:600">Restore a downloaded sort map</button></p>
@@ -165,7 +238,7 @@ dl:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',search:'<
 const ic=(n,s=17)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]||''}</svg>`;
 const BASE=[{id:'new',n:'Inbox',col:'#8b93a7'},{id:'keep',n:'Candidates',col:'#34c98a'},{id:'later',n:'Save for later',col:'#f0b13c'},{id:'final',n:'Final cut',col:'#b583ff'},{id:'no',n:'Rejected',col:'#ef6b6b'}];
 const MOODS={Chill:[['Khruangbin','Texas Sun'],['Men I Trust','Show Me How'],['Tycho','A Walk']],Upbeat:[['Fred again..','Marea (We’ve Lost Dancing)'],['Dua Lipa','Houdini'],['Justice','D.A.N.C.E.']],Nostalgic:[['Fleetwood Mac','Dreams'],['Beach House','Space Song'],['The Cinematic Orchestra','To Build a Home']],'Road trip':[['Vampire Weekend','Cape Cod Kwassa Kwassa'],['Foals','My Number'],['Bastille','Pompeii']],Cinematic:[['Hans Zimmer','Time'],['Ólafur Arnalds','Saman'],['M83','Outro']],Summer:[['Caribou','Can’t Do Without You'],['Jungle','Back On 74'],['Glass Animals','Heat Waves']]};
-const DEF={theme:'auto',cell:158,q:2560,tq:.82,par:2,pcache:true};
+const DEF={theme:'auto',cell:158,q:2560,tq:.82,par:2,pcache:true,precache:true};
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const why=e=>{const m=(e&&(e.message||e.code))||String(e||'unknown error');return m.replace(/\s+/g,' ').slice(0,140)};
 const fmt=n=>n>1048576?(n/1048576).toFixed(n>10485760?0:1)+' MB':n>1024?Math.round(n/1024)+' KB':n+' B';
@@ -387,7 +460,7 @@ async function saveTile(it,canvas){
 async function clearPreviewCache(){
   await idbClear('tiles');tileIdx=null;
   [...objUrls.keys()].forEach(k=>{if(k.endsWith('|tile')){URL.revokeObjectURL(objUrls.get(k));objUrls.delete(k)}});
-  items.forEach(i=>i.tilePrefetched=false);
+  items.forEach(i=>i.prefetching=null);
   toast('Cached tiles cleared');render();
 }
 
@@ -409,7 +482,7 @@ function mount(box,it,full){
     m.src=objUrl(it.key+'|src',it.file)+(full?'':'#t=0.1');
     box.appendChild(m);return;
   }
-  box.innerHTML='<span style="opacity:.6">Loading…</span>';
+  box.innerHTML=full?'<div class="spin"></div>':'<div class="skel"></div>';
   isHeif(it).then(heif=>{
     if(!alive())return;
     if(!heif){
@@ -434,7 +507,7 @@ function mount(box,it,full){
       put(im);
       if(!full)return;                       // grid: the cached tile *is* the view
     }else if(alive()){
-      box.innerHTML='<span style="opacity:.6">Decoding…</span>';
+      box.innerHTML=full?'<div class="spin"></div>':'<div class="skel"></div>';
     }
     try{
       await slot();
@@ -461,11 +534,55 @@ function mount(box,it,full){
     }
   }
 }
+/* ---------- pre-cache every photo after a folder opens ---------- */
+const pc={active:false,done:0,total:0,ok:0,fail:0,cancel:false};
+function pcUI(){
+  const el=$('#pc');if(!el)return;
+  el.classList.toggle('hide',!pc.active&&!pc.total);
+  const bar=$('#pcbar i');if(bar)bar.style.width=(pc.total?Math.round(pc.done/pc.total*100):0)+'%';
+  const lab=$('#pclab');
+  if(lab)lab.textContent=pc.active?('Caching '+pc.done+' of '+pc.total):(pc.ok?('Cached '+pc.ok+' tiles'):'');
+  const x=$('#pcx');if(x)x.style.display=pc.active?'inline-flex':'none';
+}
+async function precacheAll(){
+  if(!S.set.precache||pc.active)return;
+  const queue=items.filter(i=>!i.vid);
+  pc.active=true;pc.cancel=false;pc.total=queue.length;pc.done=0;pc.ok=0;pc.fail=0;pcUI();
+  for(const it of queue){
+    if(pc.cancel)break;
+    try{
+      if(await isHeif(it)){
+        if(await tileUrl(it)){pc.ok++}
+        else if(await prefetchTile(it)){pc.ok++}
+        else{pc.fail++}
+      }
+    }catch(e){pc.fail++}
+    pc.done++;pcUI();
+    await new Promise(r=>setTimeout(r,10));
+  }
+  pc.active=false;pcUI();
+  setTimeout(()=>{if(!pc.active){pc.total=0;pcUI()}},6000);
+  if(pc.cancel)toast('Caching stopped at '+pc.done+' of '+pc.total);
+  else toast('Cached '+pc.ok+' of '+pc.total+' photos for offline use');
+}
+function stopPrecache(){pc.cancel=true}
+// decode one tile in the background. Returns a tile URL, or null on failure.
+// Concurrent callers share the same promise, so a tile never decodes twice.
 async function prefetchTile(it){
-  if(!S.set.pcache||it.vid||it.tilePrefetched)return;
-  it.tilePrefetched=true;
-  if(!(await isHeif(it))||await tileUrl(it))return;
-  try{await slot();let c;try{c=await paint(it,THUMB)}finally{free()}if(c)await saveTile(it,c)}catch(e){}
+  if(!S.set.pcache||it.vid)return null;
+  const have=await tileUrl(it);
+  if(have)return have;
+  if(it.prefetching)return it.prefetching;
+  it.prefetching=(async()=>{
+    try{
+      if(!(await isHeif(it)))return null;
+      await slot();
+      let c;try{c=await paint(it,THUMB)}finally{free()}
+      return c?await saveTile(it,c):null;
+    }catch(e){return null}
+    finally{it.prefetching=null}
+  })();
+  return it.prefetching;
 }
 
 /* ---------- custom dropdowns ---------- */
@@ -478,10 +595,10 @@ const DD={
     set:v=>{S.set.theme=v;save();applyTheme();renderSheet()}}),
   cell:()=>({cur:String(S.set.cell),items:[['132','Compact'],['158','Medium'],['190','Large']],
     set:v=>{S.set.cell=+v;save();applyCss();renderSheet();render()}}),
-  prev:()=>({cur:String(S.set.q),items:[['1600','1600 px — fastest'],['2560','2560 px — recommended'],['3840','3840 px — sharper'],['0','Full size — slowest']],
+  prev:()=>({cur:String(S.set.q),items:[['1600','1600 px (fastest)'],['2560','2560 px (recommended)'],['3840','3840 px (sharper)'],['0','Full size (slowest)']],
     set:v=>{S.set.q=+v;save();renderSheet();
-      toast('Preview size changed — previews are cached per size');}}),
-  par:()=>({cur:String(S.set.par),items:[['1','1 at a time — low memory'],['2','2 — default'],['3','3'],['4','4 — fastest']],
+      toast('Preview size changed. Previews cache per size.');}}),
+  par:()=>({cur:String(S.set.par),items:[['1','1 at a time (low memory)'],['2','2 (default)'],['3','3'],['4','4 (fastest)']],
     set:v=>{S.set.par=+v;save();renderSheet()}})
 };
 const DD_LABEL={filter:()=>(({all:'Photos and videos',img:'Photos only',vid:'Videos only',heic:'HEIC / HEIF only'})[tf]),
@@ -606,8 +723,8 @@ async function makeZip(entries){ // entries: [{path, file}] or [{path, text}]
 async function downloadZip(list,label){
   if(!list.length)return toast('Nothing to download');
   const total=list.reduce((a,i)=>a+i.file.size,0);
-  if(total>1500*1024*1024)return toast('Too big for one zip ('+fmt(total)+') — download a smaller collection');
-  toast('Building '+label+'.zip — '+list.length+' files…');
+  if(total>1500*1024*1024)return toast('Too big for one zip ('+fmt(total)+'). Download a smaller collection.');
+  toast('Building '+label+'.zip with '+list.length+' files…');
   const C=cols(),used={},entries=[];
   const manifest={app:SLUG,appName:NAME,at:new Date().toISOString(),label,
     collections:C.map(c=>c.n),files:[]};
@@ -641,6 +758,7 @@ function load(fs){
   items.sort((a,b)=>a.file.lastModified-b.file.lastModified||a.file.name.localeCompare(b.file.name));
   applySessionToItems();
   $('#load').classList.add('hide');$('#app').classList.remove('hide');render();
+  setTimeout(()=>{precacheAll()},700);
 }
 function applySessionToItems(){
   const ids=cols().map(c=>c.id),st=S.st||{};
@@ -669,7 +787,7 @@ function act(s){
   pushHist(rec);
   if(s==='skip')idx++;
   else{setSt(it,s);if(s===cur)idx++}
-  render();
+  bodyOnly();syncCounts();
 }
 function undo(){
   const h=hist.pop();if(!h)return;
@@ -678,27 +796,34 @@ function undo(){
   if(view==='swipe'){
     if(last)idx=Math.max(0,deck().findIndex(i=>i.key===last.key));
   }
-  render();
+  bodyOnly();syncCounts();
 }
 
 /* ---------- render ---------- */
 function render(){
   const C=cols(),cc=C.find(c=>c.id===cur)||C[0],tot=items.length,done=tot-cnt('new');
   const filtered=deck().length;
-  const aside=`<aside><div class="brand">Keepers</div><div class="prog"><div style="width:${tot?done/tot*100:0}%"></div></div><div class="pl">${done} of ${tot} sorted</div>
+  const aside=`<aside><div class="brand"><span class="mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5 5L20 6"/></svg></span>Keepers</div><div class="prog"><div style="width:${tot?done/tot*100:0}%"></div></div><div class="pl">${done} of ${tot} sorted</div><div id="pc" class="pc hide"><div class="pcbar" id="pcbar"><i></i></div><span id="pclab">Caching</span><button id="pcx" data-pcancel title="Stop caching">${ic("x",12)}</button></div>
   <nav>${C.map((c,i)=>`<button class="col ${c.id===cur?'on':''}" data-c="${c.id}"><i style="background:${c.col};color:${c.col}"></i><span>${esc(c.n)}</span>${i>4?`<u data-del="${c.id}">${ic('x',14)}</u>`:''}<b>${cnt(c.id)}</b></button>`).join('')}</nav>
   <div class="add"><input id="nc" placeholder="New collection" maxlength="24"><button id="addc" title="Add collection">${ic('plus')}</button></div>
   <div style="flex:1"></div>
   <div class="asideFoot"><button id="reopen">${ic('folder')} Open another folder</button>
   <button id="openSet">${ic('gear')} Settings</button></div></aside>`;
-  const top=`<div class="top"><h2>${esc(cc.n)}</h2><span class="c" id="cnt">${cntText()}</span><span class="sp"></span>
+  const top=`<div class="top"><h2><i class="cdot" style="background:${cc.col};color:${cc.col}"></i>${esc(cc.n)}</h2><span class="c" id="cnt">${cntText()}</span><span class="sp"></span>
   <label class="search">${ic('search',15)}<input id="q" placeholder="Search names" value="${esc(search)}" autocomplete="off"><button data-qclear title="Clear" style="display:${search?'inline-flex':'none'}">${ic('x',14)}</button></label>
   <button class="dd" data-dd="filter"><span>${esc(DD_LABEL.filter())}</span><span class="car">${ic('skip',15)}</span></button>
   <div class="seg"><button data-v="swipe" class="${view==='swipe'?'on':''}">Swipe</button><button data-v="grid" class="${view==='grid'?'on':''}">Grid</button></div>
   <button data-dl="cur" title="Download this collection as a zip">${ic('dl',17)}</button>
   <button id="topSet" data-act="settings" title="Settings">${ic('gear',17)}</button></div>`;
   $('#app').innerHTML=aside+`<div class="main">${top}<div id="body"></div></div>`;
-  bodyOnly();bulk();
+  bodyOnly();bulk();pcUI();
+}
+function syncCounts(){
+  const tot=items.length,done=tot-cnt('new');
+  const p=$('.prog div');if(p)p.style.width=(tot?done/tot*100:0)+'%';
+  const pl=$('.pl');if(pl)pl.textContent=done+' of '+tot+' sorted';
+  $$('.col').forEach(b=>{const n=b.querySelector('b');if(n)n.textContent=cnt(b.dataset.c)});
+  const c=$('#cnt');if(c)c.textContent=cntText();
 }
 function cntText(){
   const c=cnt(cur),f=deck().length;
@@ -782,18 +907,20 @@ function renderSheet(){
   <div class="sec"><h4>Previews</h4>
     <div class="row"><div class="lab"><b>Full-screen size</b><small>Pixels rendered for the big preview. Smaller is faster and uses less memory; the grid always uses the cached tiles.</small></div>
       <div class="end"><button class="dd sm" data-dd="prev"><span>${esc(DD_LABEL.prev())}</span><span class="car">${ic('skip',14)}</span></button></div></div>
-    <div class="row"><div class="lab"><b>Cached tile quality</b><small>${Math.round((+S.set.tq||.82)*100)}% — size against sharpness of the grid tiles. The full-screen view is unaffected.</small></div>
+    <div class="row"><div class="lab"><b>Cached tile quality</b><small>${Math.round((+S.set.tq||.82)*100)}%. Size against sharpness of the grid tiles. The full-screen view is unaffected.</small></div>
       <div class="end"><input id="tq" type="range" min="50" max="95" step="1" value="${Math.round((+S.set.tq||.82)*100)}"></div></div>
     <div class="row"><div class="lab"><b>Parallel decoding</b><small>How many HEICs decode at once. Lower if the fan spins up.</small></div>
       <div class="end"><button class="dd sm" data-dd="par"><span>${esc(DD_LABEL.par())}</span><span class="car">${ic('skip',14)}</span></button></div></div>
   </div>
 
   <div class="sec"><h4>Offline cache</h4>
+    <div class="row"><div class="lab"><b>Pre-cache on open</b><small>Reads every HEIC once after you pick a folder and stores one small tile per photo. Slower start, instant grids later, fully offline.</small></div>
+      <div class="end"><button class="sw" data-toggle="precache" aria-pressed="${S.set.precache?'true':'false'}"></button></div></div>
     <div class="row"><div class="lab"><b>Keep cached tiles</b><small>Stores one small tile per photo so grids come back instantly and work offline. Viewing itself never converts anything.</small></div>
       <div class="end"><button class="sw" data-toggle="pcache" aria-pressed="${S.set.pcache?'true':'false'}"></button></div></div>
     <div class="row"><div class="lab"><b>Cached tiles</b><small id="cacheInfo">Checking…</small></div>
       <div class="end"><button data-act="clearCache" class="dgr">${ic('trash',15)} Clear</button></div></div>
-    <div class="row"><div class="lab"><b>HEIC decoder</b><small id="decInfo">${decState==='idle'?'Not downloaded yet — it is fetched the first time you open a HEIC, then kept offline.':(decState==='cached'?'Stored locally ('+DEC_VER+'). Works offline.':decState==='ready'?'Downloaded from '+decFrom+' and stored locally.':decState==='failed'?'Could not download — check your connection.':'Downloading…')}</small></div>
+    <div class="row"><div class="lab"><b>HEIC decoder</b><small id="decInfo">${decState==='idle'?'Not downloaded yet. Fetched the first time you open a HEIC, then kept offline.':(decState==='cached'?'Stored locally ('+DEC_VER+'). Works offline.':decState==='ready'?'Downloaded from '+decFrom+' and stored locally.':decState==='failed'?'Could not download. Check your connection.':'Downloading…')}</small></div>
       <div class="end"><button data-act="fetchDec">Cache now</button></div></div>
   </div>
 
@@ -820,11 +947,11 @@ async function updateCacheInfo(){
 }
 function refreshDecInfo(){
   const d=$('#decInfo');if(!d)return;
-  d.textContent=decState==='idle'?'Not downloaded yet — it is fetched the first time you open a HEIC, then kept offline.'
+  d.textContent=decState==='idle'?'Not downloaded yet. Fetched the first time you open a HEIC, then kept offline.'
     :decState==='loading'?'Downloading…'
     :decState==='cached'?`Stored locally (${DEC_VER}). Works offline.`
     :decState==='ready'?`Downloaded from ${decFrom} and stored locally.`
-    :'Could not download — check your connection.';
+    :'Could not download. Check your connection.';
 }
 function openSheet(name){sheet=name;renderSheet()}
 function closeSheet(){sheet=null;const el=$('#sheet');el.classList.remove('on');el.innerHTML=''}
@@ -836,6 +963,15 @@ document.addEventListener('click',e=>{
   if(menuEl&&!g('.menu')&&!g('[data-dd]'))closeMenu();
   if(g('[data-close]')||(t.id==='sheet')){return closeSheet()}
   if(el=g('[data-dd]')){e.stopPropagation();const spec=DD[el.dataset.dd];if(spec)openMenu(el,spec());return}
+  if(el=g('[data-toggle]')){
+    const k=el.dataset.toggle;
+    S.set[k]=!S.set[k];save();
+    el.setAttribute('aria-pressed',S.set[k]?'true':'false');
+    if(k==='precache'&&S.set.precache&&items.length)setTimeout(()=>{pc.total=0;precacheAll()},200);
+    if(k==='pcache'&&!S.set.pcache)clearPreviewCache();
+    return;
+  }
+  if(g('[data-pcancel]')){stopPrecache();return}
   if(el=g('[data-act]'))return sheetAction(el.dataset.act);
   if(el=g('[data-dl]')){downloadZip(deck().filter(i=>!search||smatch(i)),(cols().find(c=>c.id===cur)||{n:'dump'}).n);return}
   if(g('#openSet')){return openSheet('settings')}
@@ -844,7 +980,7 @@ document.addEventListener('click',e=>{
     items.forEach(i=>{if(i.st===id)setSt(i,'new')});
     S.cols=(S.cols||[]).filter(c=>c.id!==id);if(cur===id)cur='new';save();return render()}
   if(el=g('[data-retry]')){e.stopPropagation();const m=by(),it=m[el.dataset.retry];if(!it)return;
-    it.err=null;it.painted=false;it.tilePrefetched=false;it.heif=undefined;
+    it.err=null;it.painted=false;it.prefetching=null;it.heif=undefined;
     const box=el.closest('.med');
     return box?mount(box,it,box.closest('.cell')?false:true):render()}
   if(el=g('[data-c]')){cur=el.dataset.c;idx=0;sel.clear();search='';return render()}
@@ -858,7 +994,7 @@ document.addEventListener('click',e=>{
   if(g('[data-selnone]')){sel.clear();rGrid();bulk();return}
   if(el=g('[data-mv]')){
     const m=by(),rec=[];sel.forEach(k=>{const it=m[k];if(it){rec.push({key:k,prev:it.st});setSt(it,el.dataset.mv)}});
-    pushHist(rec);const n=sel.size;sel.clear();render();
+    pushHist(rec);const n=sel.size;sel.clear();bodyOnly();syncCounts();
     toast(`Moved ${n} file${n===1?'':'s'}`,{label:'Undo',fn:undo});return}
   if(g('[data-clr]')){sel.clear();return render()}
   if(g('#more')){lim+=90;return rGrid()}
@@ -866,7 +1002,7 @@ document.addEventListener('click',e=>{
   if(el=g('[data-m]')){const k=el.closest('.cell').dataset.k,i=finals.indexOf(k);
     if(el.dataset.m==='x')setSt(by()[k],'keep');else{const j=i+ +el.dataset.m;if(j<0||j>=finals.length)return;[finals[i],finals[j]]=[finals[j],finals[i]];save()}return render()}
   if(g('#cp')){const m=by(),txt=finals.map(k=>m[k].file.name).join('\n');
-    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{$('#cpm').textContent='Copied';toast('Filenames copied')}).catch(()=>{toast('Copy blocked — select the text manually');$('#cpm').textContent=txt.replace(/\n/g,', ')});return}
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{$('#cpm').textContent='Copied';toast('Filenames copied')}).catch(()=>{toast('Copy blocked. Select the text manually.');$('#cpm').textContent=txt.replace(/\n/g,', ')});return}
   if(g('#dlfinal')){downloadZip(finals.map(k=>by()[k]).filter(Boolean),'final-cut');return}
   if(el=g('#g .cell')){const k=el.dataset.k;sel.has(k)?sel.delete(k):sel.add(k);el.classList.toggle('sel');bulk()}
 });
@@ -881,7 +1017,7 @@ async function sheetAction(a){
   if(a==='clearCache')return clearPreviewCache();
   if(a==='fetchDec'){
     toast('Caching the HEIC decoder…');
-    try{await heicLib();toast('Decoder cached — HEIC now works offline');refreshDecInfo()}
+    try{await heicLib();toast('Decoder cached. HEIC works offline.');refreshDecInfo()}
     catch(e){toast(why(e));refreshDecInfo()}
     return;
   }
@@ -891,8 +1027,8 @@ async function sheetAction(a){
     await openDB();
     try{DB&&DB.transaction('media','readwrite').objectStore('media').clear()}catch(e){}
     mediaIdx=[];S={};S.set={...DEF};finals=[];notes='';hist=[];sel.clear();
-    items.forEach(i=>{i.st='new';i.painted=false;i.tilePrefetched=false});
-    applyTheme();applyCss();closeSheet();render();toast('Reset — starting fresh');
+    items.forEach(i=>{i.st='new';i.painted=false;i.prefetching=null});
+    applyTheme();applyCss();closeSheet();render();toast('Reset. Starting fresh');
     return;
   }
 }
@@ -900,7 +1036,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='tq'){
     S.set.tq=(+e.target.value)/100;save();
     const lab=e.target.closest('.row').querySelector('small');
-    if(lab)lab.textContent=Math.round(S.set.tq*100)+'% — size against sharpness of the grid tiles. The full-screen view is unaffected.';
+    if(lab)lab.textContent=Math.round(S.set.tq*100)+'%. Size against sharpness of the grid tiles. The full-screen view is unaffected.';
   }
 });
 document.addEventListener('input',e=>{
