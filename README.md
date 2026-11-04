@@ -12,11 +12,14 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 ## What it does
 
 - **Swipe view**, keyboard or touch, with a card that fits the photo instead of the other way round: 4:3 stays 4:3, panoramas get a wide card, portraits get a tall one, and video sizes itself from the clip's own metadata. `←` reject, `→` candidate, `Space` later, `↑` final cut, `↓` skip, `Z` undo. Drag the card if you prefer gestures.
+- **Compare two photos**, side by side, from anywhere: pick two cells in the grid and hit Compare, press `C` while swiping, or use Compare two at a time inside Final cut to walk the collection as pairs. Each side has Keep, Later and Reject, so a near duplicate sits one click from its twin. Keep and Reject pull the next photo into that slot, so you keep judging without reopening anything. `1` and `2` keep the left or right photo, `Q` and `W` reject, `S` swaps the sides, `N` jumps to the next pair.
+- **Quick reject in the grid**: a small red cross on every tile. Hover a photo, click the cross, it leaves the collection with an undo in the toast.
+- **Guide lines** over the photo in swipe and compare: rule of thirds, golden ratio, centre cross, diagonals or a fine grid, with colour, width and opacity in Settings.
 - **Grid view**, virtualized: only the rows on screen live in the DOM, so a folder of a thousand photos scrolls at the same cost as a folder of thirty. Click to select a bunch, then move them all at once. Undo from the toast.
 - **Collections**: Inbox, Candidates, Save for later, Final cut, Rejected, plus your own. Counts and progress stay visible.
 - **Final cut**, reorder slides, cap is 20 (Instagram carousel), copy filenames in order, get music ideas, keep notes/caption.
 - **Search and filters**, filter by photos / videos / HEIC only, and search by filename.
-- **Settings**: theme (auto/light/dark), thumbnail size, full-screen preview size, cached tile quality, parallel decoding, cache controls (usage in MB, clear, pre-cache the decoder).
+- **Settings**: theme (auto/light/dark), thumbnail size, guide lines, full-screen preview size, cached tile quality, parallel decoding, cache controls (usage in MB, clear, pre-cache the decoder).
 
 ## What you can take out of it
 
@@ -64,13 +67,14 @@ Sorting state persists per browser, so you can close the tab and come back.
 | `↑` / `↓` | Final cut / Skip |
 | `1`–`9` | Move to collection N |
 | `Z` | Undo |
+| `C` | Compare this photo with the next one |
 | `/` | Focus search |
 | `,` | Settings |
 | `Esc` | Close menu / clear search |
 
 ## Notes on the source
 
-Single HTML document: inline CSS, inline JS, inline SVG data-URI favicon. The ZIP writer is a ~60 line store-only implementation (CRC32, local headers, central directory) so there is nothing to load at runtime. Swipe actions patch counters in place instead of rebuilding the shell. The grid keeps a translated window of cells around the viewport and recycles them on scroll, and HEIC work is posted to a worker that owns its own copy of the decoder.
+Single HTML document: inline CSS, inline JS, inline SVG data-URI favicon. The ZIP writer is a ~60 line store-only implementation (CRC32, local headers, central directory) so there is nothing to load at runtime. Swipe actions patch counters in place instead of rebuilding the shell. Compare is a third view beside swipe and grid: it mounts two media boxes, sizes them from the wider of the pair, and repaints one side at a time when a judgement lands. Guide lines are an SVG overlay with non-scaling strokes, so the width you pick looks the same at any photo size. The grid keeps a translated window of cells around the viewport and recycles them on scroll, and HEIC work is posted to a worker that owns its own copy of the decoder.
 
 ## License
 
