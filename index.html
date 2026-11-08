@@ -50,7 +50,7 @@ nav{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:24px;b
 .col u{text-decoration:none;color:var(--mu);display:none}.col:hover u{display:inline-flex}
 .add{display:flex;gap:10px;padding:0 2px}.add input{flex:1;min-width:0;background:var(--bg);border:0;box-shadow:var(--dn);border-radius:14px;padding:10px 14px;outline:0}
 .add input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-.main{padding:30px 34px 110px;min-width:0}
+.main{padding:30px 34px 40px;min-width:0}
 .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px}
 .top h2{margin:0;font-size:34px;font-weight:600;letter-spacing:-.04em;line-height:1}.top .c{color:var(--mu)}
 .sp{flex:1}
@@ -179,14 +179,14 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .shell{grid-template-columns:1fr}aside{position:static;height:auto;padding:16px 16px 6px;gap:12px}
 nav{flex-direction:row;overflow-x:auto}.col{width:auto;white-space:nowrap}
 .asideFoot{flex-direction:row}.asideFoot button{flex:1;justify-content:center;font-size:13px;padding:9px 10px}
-#topSet{display:none}.two{grid-template-columns:1fr}.main{padding:10px 16px 110px}
+#topSet{display:none}.two{grid-template-columns:1fr}.main{padding:10px 16px 92px}
 .top{gap:8px;margin-bottom:18px}.top h2{font-size:26px}.acts{gap:12px}.rnd{width:66px;height:66px}.rnd small{font-size:10px}
-.search input{width:96px}.search{flex:1;min-width:150px}.dd{max-width:160px}.card{height:min(58vh,520px);border-radius:30px}
+.search input{width:96px}.search{flex:1;min-width:150px}.dd{max-width:160px}.card{border-radius:30px}
 .sheet .pane{padding:20px 18px 14px;border-radius:26px}.menu{max-width:min(320px,92vw)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ---------- visual layer ---------- */
-.shell,.hero,#bulk,.sheet,.toast{position:relative;z-index:1}
+.shell,.hero{position:relative;z-index:1}
 .brand{display:flex;align-items:center;gap:10px;font-size:21px}
 .brand .mark{width:30px;height:30px;border-radius:11px;background:var(--grad);display:grid;place-items:center;color:#fff;flex:none;box-shadow:var(--glow),inset 0 1px 0 #ffffff66}
 .hero{overflow:hidden}
@@ -247,6 +247,44 @@ nav{background:linear-gradient(180deg,#ffffff40,transparent)}
 .toast{background:linear-gradient(180deg,#20262f,#14181e);border:1px solid #ffffff1f;width:max-content;max-width:min(92vw,560px)}
 @media(prefers-reduced-motion:reduce){.blob,.prog div::after,.spin,.skel,.cell .med img,.cell .med canvas{animation:none!important}}
 @media(max-width:820px){.main>.top{top:6px;padding:8px 10px;border-radius:18px}}
+/* ---------- settings sheet and controls ---------- */
+:root{--ctl:#ffffff;--ctlh:#f4f7fc;--ctlb:#c2ccdd;--ctlsh:0 1px 2px #1a23331a}
+:root[data-theme="dark"]{--ctl:#2a2f39;--ctlh:#313845;--ctlb:#3d4553;--ctlsh:0 1px 2px #00000040}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ctl:#2a2f39;--ctlh:#313845;--ctlb:#3d4553;--ctlsh:0 1px 2px #00000040}}
+body:has(.sheet.on){overflow:hidden}
+.sheet{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:clamp(12px,2.6vw,28px);background:#05070b73;backdrop-filter:blur(7px)}
+.sheet.on{display:flex}
+.sheet .pane{display:flex;flex-direction:column;width:min(620px,100%);max-height:min(840px,88vh);overflow:hidden;padding:0;border-radius:26px;
+background:linear-gradient(180deg,#ffffff40,transparent 62%),var(--bg);border:1px solid var(--line);box-shadow:0 34px 70px -32px #000000b3,0 2px 8px #00000026}
+:root[data-theme="dark"] .sheet .pane{background:linear-gradient(180deg,#ffffff14,transparent 62%),var(--bg)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .sheet .pane{background:linear-gradient(180deg,#ffffff14,transparent 62%),var(--bg)}}
+.shead{flex:none;display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid var(--lo);box-shadow:0 1px 0 var(--hi)}
+.shead .x{padding:8px;color:var(--mu);flex:none}
+.sbody{flex:1 1 auto;overflow:auto;overscroll-behavior:contain;padding:6px 24px 16px;scrollbar-width:thin}
+.sbody::-webkit-scrollbar{width:8px}.sbody::-webkit-scrollbar-thumb{background:var(--lo);border-radius:8px}
+.sbody .sec:first-child{margin-top:12px}
+.sfoot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 24px;border-top:1px solid var(--lo);box-shadow:0 -1px 0 var(--hi)}
+.sheet button{background:var(--ctl);border:1px solid var(--ctlb);border-radius:10px;box-shadow:var(--ctlsh);padding:7px 12px;font-size:13px;
+transition:background .14s,border-color .14s}
+.sheet button:hover{background:var(--ctlh)}
+.sheet button:active{background:var(--ctlh);box-shadow:inset 0 1px 2px #0000002e}
+.sheet .dd{height:34px;max-width:214px;padding:0 10px;border-radius:10px;gap:6px;font-size:12.5px}
+.sheet .dd .car{opacity:.45}
+.sheet .sw{width:44px;height:24px;padding:0;border-radius:999px;background:var(--ctl);border:1px solid var(--ctlb);box-shadow:var(--ctlsh)}
+.sheet .sw::after{top:3px;left:3px;width:16px;height:16px;background:var(--hi);box-shadow:0 1px 2px #00000040;transition:left .16s,background .16s}
+.sheet .sw[aria-pressed="true"]{background:var(--ac);border-color:transparent;box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
+.sheet .sw[aria-pressed="true"]::after{left:23px;background:#fff}
+.sheet input[type=range]{width:132px;height:4px;border-radius:999px;background:var(--ctlb);box-shadow:none}
+.sheet input[type=range]::-webkit-slider-thumb{width:16px;height:16px;box-shadow:0 1px 3px #00000059}
+.sheet input[type=range]::-moz-range-thumb{width:14px;height:14px;box-shadow:0 1px 3px #00000059}
+.sheet input[type=color]{width:32px;height:24px;border-radius:8px;border:1px solid var(--ctlb);box-shadow:var(--ctlsh)}
+.sheet .row{padding:11px 0;gap:16px}
+.sheet .dgr{color:#e0564f}
+@media(max-width:820px){.sheet{padding:10px;align-items:flex-start}
+.sheet .pane{max-height:calc(100vh - 20px);border-radius:20px}
+.shead{padding:16px 18px 12px}.sbody{padding:4px 18px 8px}.sfoot{padding:11px 18px}
+.sheet .dd{max-width:170px}.sheet input[type=range]{width:110px}}
+
 </style>
 </head>
 <body>
@@ -303,7 +341,9 @@ applyTheme();applyCss();
 /* ---------- toast ---------- */
 let toastT=null;
 function toast(msg,action){
-  const t=$('#toast');t.innerHTML=esc(msg)+(action?` <button id="toastAct">${esc(action.label)}</button>`:'');
+  const t=$('#toast'),bk=$('#bulk'),bb=bk&&bk.offsetHeight?bk.getBoundingClientRect():null;
+  t.style.bottom=(bb?Math.round(innerHeight-bb.top)+10:26)+'px';
+  t.innerHTML=esc(msg)+(action?` <button id="toastAct">${esc(action.label)}</button>`:'');
   t.classList.add('on');clearTimeout(toastT);
   if(action)$('#toastAct').onclick=()=>{t.classList.remove('on');action.fn()};
   toastT=setTimeout(()=>t.classList.remove('on'),action?6000:2600);
@@ -1251,9 +1291,9 @@ function renderSheet(){
   if(sheet!=='settings')return;
   const el=$('#sheet');
   el.innerHTML=`<div class="pane">
-  <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h3>Settings</h3><p class="sub">Everything below is stored on this device only.</p></div>
-  <button data-close title="Close" style="padding:8px">${ic('x',18)}</button></div>
-
+  <div class="shead"><div style="flex:1"><h3>Settings</h3><p class="sub">Everything below is stored on this device only.</p></div>
+  <button data-close class="x" title="Close">${ic('x',18)}</button></div>
+  <div class="sbody">
   <div class="sec"><h4>Appearance</h4>
     <div class="row"><div class="lab"><b>Theme</b><small>Follow the system, or force light or dark.</small></div>
       <div class="end"><button class="dd sm" data-dd="theme"><span>${esc(DD_LABEL.theme())}</span><span class="car">${ic('skip',14)}</span></button></div></div>
@@ -1299,7 +1339,8 @@ function renderSheet(){
       <div class="end"><button data-act="zipall">${ic('file',15)} Build zip</button></div></div>
   </div>
 
-  <div class="foot"><span style="color:var(--mu);font-size:11.5px">${items.length?items.length+' files loaded':'No files loaded yet'}</span>
+  </div>
+  <div class="sfoot"><span style="color:var(--mu);font-size:11.5px">${items.length?items.length+' files loaded':'No files loaded yet'}</span>
   <button data-act="reset" class="dgr">${ic('trash',15)} Reset everything</button></div>
   </div>`;
   el.classList.add('on');

@@ -19,7 +19,8 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 - **Collections**: Inbox, Candidates, Save for later, Final cut, Rejected, plus your own. Counts and progress stay visible.
 - **Final cut**, reorder slides, cap is 20 (Instagram carousel), copy filenames in order, get music ideas, keep notes/caption.
 - **Search and filters**, filter by photos / videos / HEIC only, and search by filename.
-- **Settings**: theme (auto/light/dark), thumbnail size, guide lines, full-screen preview size, cached tile quality, parallel decoding, cache controls (usage in MB, clear, pre-cache the decoder).
+- **Settings**: a real modal with a pinned header, a scrolling middle and a pinned footer. Theme (auto/light/dark), thumbnail size, guide lines, full-screen preview size, cached tile quality, parallel decoding, cache controls (usage in MB, clear, pre-cache the decoder).
+- Flat controls inside Settings: a 1 px border, no inset shadows, one shared surface colour. The floating bulk bar and the toast stay pinned to the viewport, and the toast steps above the bulk bar when both are up.
 
 ## What you can take out of it
 
