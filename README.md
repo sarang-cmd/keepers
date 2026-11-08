@@ -9,13 +9,13 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 
 Live copy: <https://keepers-arena.vercel.app>
 
-![Swipe view with the card sized from a 4:3 photo and rule of thirds on](docs/swipe.jpg)
-
 ---
 
 ## Screenshots
 
-The photos are stock AI shots converted to real HEIC files, so the screenshots show the actual decoding path.
+The photos behind these shots are stock AI images converted to real HEIC files, so what you see is the actual decode and cache path.
+
+![Swipe view, the card sized from a 4:3 photo, rule of thirds on](docs/swipe.jpg)
 
 | Compare two at a time | Grid of cached tiles |
 |---|---|
