@@ -40,7 +40,7 @@ The photos behind these shots are stock AI images converted to real HEIC files, 
 - **Final cut**, reorder slides, cap is 20 (Instagram carousel), copy filenames in order, get music ideas, keep notes/caption.
 - **Search and filters**, filter by photos / videos / HEIC only, and search by filename.
 - **Settings**: a real modal with a pinned header, a scrolling middle and a pinned footer. Theme (auto/light/dark), thumbnail size, guide lines, full-screen preview size, cached tile quality, parallel decoding, cache controls (usage in MB, clear, pre-cache the decoder).
-- Flat controls inside Settings: a 1 px border, no inset shadows, one shared surface colour. The floating bulk bar and the toast stay pinned to the viewport, and the toast steps above the bulk bar when both are up.
+- Flat controls in the top bar, the sidebar, the menus and Settings: a 1 px border, no inset shadows, one shared surface colour. The page background sits on a fixed layer so nothing can band at the bottom, and the floating bulk bar and the toast stay pinned to the viewport, with the toast stepping above the bulk bar when both are up.
 
 ## What you can take out of it
 
