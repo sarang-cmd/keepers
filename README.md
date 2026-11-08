@@ -7,7 +7,7 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 - Formerly called *Dump Curator*. Sort maps exported by the old name still import.
 - One file, no build step, no dependencies to install, no server.
 
-Live copy: <https://keepers-arena.vercel.app>
+Live copy: <https://keepers-inky.vercel.app>
 
 ---
 
