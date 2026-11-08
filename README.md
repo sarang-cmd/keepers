@@ -7,6 +7,26 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 - Formerly called *Dump Curator*. Sort maps exported by the old name still import.
 - One file, no build step, no dependencies to install, no server.
 
+Live copy: <https://keepers-arena.vercel.app>
+
+![Swipe view with the card sized from a 4:3 photo and rule of thirds on](docs/swipe.jpg)
+
+---
+
+## Screenshots
+
+The photos are stock AI shots converted to real HEIC files, so the screenshots show the actual decoding path.
+
+| Compare two at a time | Grid of cached tiles |
+|---|---|
+| ![Compare view, two panes with keep, later and reject](docs/compare.jpg) | ![Grid view with cached tiles](docs/grid.jpg) |
+
+![Settings modal with a pinned header, scrolling body and pinned footer](docs/settings.jpg)
+
+<img src="docs/mobile.jpg" width="300" alt="Phone layout, swipe view">
+
+![First run](docs/hero.jpg)
+
 ---
 
 ## What it does
