@@ -23,7 +23,9 @@ The photos behind these shots are stock AI images converted to real HEIC files, 
 
 ![Settings modal with a pinned header, scrolling body and pinned footer](docs/settings.jpg)
 
-<img src="docs/mobile.jpg" width="300" alt="Phone layout, swipe view">
+<p align="center"><img src="docs/mobile.jpg" width="340" alt="Phone layout: sidebar, swipe card with rule of thirds, controls"></p>
+
+<p align="center"><sub>Phone layout at 390 px. Sidebar, card and controls fit with no sideways scroll.</sub></p>
 
 ![First run](docs/hero.jpg)
 
@@ -58,7 +60,7 @@ The toolbar `↓` button zips just the collection you are looking at.
 Browsers can't decode HEIC except Safari, so Keepers uses [libheif](https://github.com/strukturag/libheif) compiled to WASM (via [`heic-to`](https://github.com/hoppergee/heic-to)).
 
 - The decoder (~3 MB) is downloaded **once**, then stored in IndexedDB and served from there, so HEIC keeps working offline.
-- After a folder opens, Keepers pre-caches every photo in the background: one small tile per HEIC, built inside the worker. A progress row in the sidebar shows the count and carries a stop button.
+- After a folder opens, Keepers pre-caches every photo in the background: one small tile per HEIC, built inside the worker. Decodes run in a worker pool sized from your core count, and the pool starts once the first photo has painted, so the photo in front of you never waits behind the cache run. A progress row in the sidebar shows the count and the rate, and carries a stop button.
 - Decoding runs in a **Web Worker**, so libheif never blocks the interface. The worker hands back a ready `ImageBitmap` and the small cached tile in one message. Browsers without `OffscreenCanvas` fall back to decoding on the main thread automatically.
 - **Viewing never converts anything.** libheif hands back pixels and they are painted on a `<canvas>` at exactly the size needed. No JPEG round trip, no intermediate file, no full size copy in memory for 48 MP shots.
 - The only encoded artifact is a small cached tile (≤ 480 px, roughly 30 KB per photo) so a grid of hundreds of HEICs reopens instantly and works with no network at all.
