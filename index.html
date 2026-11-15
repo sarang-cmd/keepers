@@ -179,7 +179,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 @media(max-width:820px){.cmp{flex-direction:column}.cmp .cshot{height:min(32vh,300px)}
 .card .med img,.card .med canvas,.card .med video{max-width:calc(100vw - 64px);max-height:min(58vh,520px)}
 .shell{grid-template-columns:1fr}aside{position:static;height:auto;padding:16px 16px 6px;gap:12px}
-nav{flex-direction:row;overflow-x:auto}.col{width:auto;white-space:nowrap}
+nav{flex-direction:row;flex-wrap:wrap;gap:6px;overflow:visible}.col{width:auto;white-space:nowrap}
 .asideFoot{flex-direction:row}.asideFoot button{flex:1;justify-content:center;font-size:13px;padding:9px 10px}
 #topSet{display:none}.two{grid-template-columns:1fr}.main{padding:10px 16px 92px}
 .top{gap:8px;margin-bottom:18px}.top h2{font-size:26px}.acts{gap:12px}.rnd{width:66px;height:66px}.rnd small{font-size:10px}
@@ -308,7 +308,11 @@ background:var(--ctl);border:1px solid var(--ctlb);box-shadow:var(--ctlsh)}
 .menu button{border:0;box-shadow:none;background:none;border-radius:10px}
 .menu button:hover{background:var(--ctlh)}
 .mv button{border:1px solid var(--ctlb);box-shadow:var(--ctlsh);background:var(--ctl)}
-@media(max-width:820px){.asideFoot button{justify-content:center;white-space:nowrap;gap:6px;padding:9px 8px;font-size:12.5px}.asideFoot button svg{width:15px;height:15px}.dd,.search{height:36px}}
+@media(max-width:820px){.asideFoot button{justify-content:center;white-space:nowrap;gap:6px;padding:9px 8px;font-size:12.5px}.asideFoot button svg{width:15px;height:15px}.dd,.search{height:36px}
+.top h2{order:1}.top .c{order:2}.top .sp{order:3;flex:1}
+.top>button{order:4}
+.search{order:5;flex:1 1 100%;min-width:0}
+.top>.dd{order:6}.top>.seg{order:7}}
 
 </style>
 </head>
@@ -414,7 +418,7 @@ const THUMB=480;                       // grid tile edge (= cached tile size)
 const TILE_CAP=250*1024*1024;          // soft cap for cached tiles
 let heicLibP=null,decState='idle',decFrom='';
 let q=0;const waiters=[];
-const slot=()=>(q<(+S.set.par||2))?(q++,Promise.resolve()):new Promise(r=>waiters.push(r));
+const slot=()=>(q<poolN())?(q++,Promise.resolve()):new Promise(r=>waiters.push(r));
 const free=()=>{const w=waiters.shift();w?w():q--};
 const previewEdge=()=>+S.set.q>0?+S.set.q:8192;
 
@@ -488,21 +492,27 @@ self.onmessage=async function(e){
          is given, so a size hint that is off (rotation, crop, odd container) can
          never squash the photo. It can only leave it a little larger than asked. */
       if(d.w>=d.h) opt.resizeWidth=d.maxEdge; else opt.resizeHeight=d.maxEdge;
-      opt.resizeQuality='high';
+      opt.resizeQuality=d.tileOnly?'medium':'high';
     }
     var bmp=await self.HeicTo({blob:d.file,type:'bitmap',options:opt});
     var out={id:d.id,ok:true,width:bmp.width,height:bmp.height};
-    out.bitmap=bmp;
-    var transfer=[bmp];
+    var transfer=[];
     if(d.tileEdge){
       var sc=Math.min(1,d.tileEdge/Math.max(bmp.width,bmp.height));
       var oc=new OffscreenCanvas(Math.max(1,Math.round(bmp.width*sc)),Math.max(1,Math.round(bmp.height*sc)));
       var g2=oc.getContext('2d');
-      g2.imageSmoothingQuality='high';
+      g2.imageSmoothingQuality='medium';
       g2.drawImage(bmp,0,0,oc.width,oc.height);
       var q=d.tileQ||0.82;
       try{out.tile=await oc.convertToBlob({type:'image/webp',quality:q})}
       catch(err){out.tile=await oc.convertToBlob({type:'image/jpeg',quality:q})}
+    }
+    /* a tile only job hands back the small blob and nothing else, so a full size
+       bitmap never crosses the thread boundary */
+    if(d.tileOnly){
+      if(bmp.close)bmp.close();
+    }else{
+      out.bitmap=bmp;transfer=[bmp];
     }
     self.postMessage(out,transfer);
   }catch(err){
@@ -510,35 +520,51 @@ self.onmessage=async function(e){
   }
 };
 `;
-let wk=null,wkP=null,wkSeq=0;const wkPend=new Map();
-function workerInstance(){
-  if(wk)return Promise.resolve(wk);
-  if(wkP)return wkP;
-  wkP=(async()=>{
+/* a small pool of decoders: libheif runs single threaded inside one worker, so a
+   second and third worker is where the real speed comes from. The pool is sized
+   from the user setting and the core count, and the busy one is always skipped. */
+const parN=()=>Math.max(1,Math.min(4,+S.set.par||2));
+const cores=()=>navigator.hardwareConcurrency||4;
+const poolN=()=>{const c=cores();const byCore=c>=10?4:c>=6?3:c>=3?2:1;return Math.max(1,Math.min(4,Math.max(parN(),byCore)))};
+const wpool=[];let wSpawning=0,wkSeq=0,fgBusy=0;
+function spawnWorker(){
+  return (async()=>{
     if(typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined')throw new Error('worker path unavailable');
     const code=await decoderSource();
     const url=URL.createObjectURL(new Blob([code+'\n'+WORKER_GLUE],{type:'text/javascript'}));
     const w=new Worker(url);
+    const slot={w,busy:0,pend:new Map()};
     w.onmessage=e=>{
-      const m=e.data,p=wkPend.get(m.id);if(!p)return;
-      wkPend.delete(m.id);
+      const m=e.data,p=slot.pend.get(m.id);if(!p)return;
+      slot.pend.delete(m.id);slot.busy=slot.pend.size;
       m.ok?p.ok(m):p.no(new Error(m.err||'decode failed'));
     };
     w.onerror=()=>{
-      wkPend.forEach(p=>p.no(new Error('worker error')));
-      wkPend.clear();wk=null;wkP=null;
+      slot.pend.forEach(p=>p.no(new Error('worker error')));
+      slot.pend.clear();slot.busy=0;
+      const i=wpool.indexOf(slot);if(i>=0)wpool.splice(i,1);
+      try{w.terminate()}catch(e){}
     };
-    wk=w;return w;
+    return slot;
   })();
-  wkP.catch(()=>{wkP=null});
-  return wkP;
+}
+async function workerSlot(){
+  for(const sl of wpool)if(!sl.busy)return sl;
+  if(wpool.length+wSpawning<poolN()){
+    wSpawning++;
+    try{const sl=await spawnWorker();wpool.push(sl);return sl}
+    finally{wSpawning--}
+  }
+  let best=wpool[0];
+  for(const sl of wpool)if(sl.busy<best.busy)best=sl;
+  return best;
 }
 function workerDecode(file,opt){
   return new Promise((res,rej)=>{
-    workerInstance().then(w=>{
+    workerSlot().then(sl=>{
       const id=++wkSeq;
-      wkPend.set(id,{ok:res,no:rej});
-      w.postMessage({id,file,maxEdge:opt.maxEdge,tileEdge:opt.tileEdge||0,tileQ:opt.tileQ||0,w:opt.w||0,h:opt.h||0});
+      sl.pend.set(id,{ok:res,no:rej});sl.busy=sl.pend.size;
+      sl.w.postMessage({id,file,maxEdge:opt.maxEdge,tileEdge:opt.tileEdge||0,tileQ:opt.tileQ||0,w:opt.w||0,h:opt.h||0,tileOnly:opt.tileOnly?1:0});
     }).catch(rej);
   });
 }
@@ -583,10 +609,12 @@ async function heifBitmap(it,maxEdge){
 }
 async function paint(it,maxEdge,tileSpec){
   const size=await heifSize(it.file);
+  const tileOnly=!!(tileSpec&&tileSpec.tileOnly);
   try{
-    const r=await workerDecode(it.file,{maxEdge,tileEdge:tileSpec?THUMB:0,tileQ:tileSpec?tileQuality():0,w:size?size.w:0,h:size?size.h:0});
+    const r=await workerDecode(it.file,{maxEdge,tileEdge:tileSpec?THUMB:0,tileQ:tileSpec?tileQuality():0,w:size?size.w:0,h:size?size.h:0,tileOnly});
     stats.worker++;
     if(!it.dims)it.dims={w:r.width,h:r.height};
+    if(tileOnly)return {canvas:null,tile:r.tile||null,thread:'worker',width:r.width,height:r.height};
     const c=document.createElement('canvas');
     c.width=r.width;c.height=r.height;
     c.getContext('2d').drawImage(r.bitmap,0,0);
@@ -654,7 +682,7 @@ async function saveTile(it,canvas){
     if(tmp){tmp.width=tmp.height=1}
     if(!blob)return null;
     await idbPut('tiles',it.key,{blob,ts:Date.now(),n:blob.size});
-    trimTiles();
+    if(!pc.active)trimTiles();
     return objUrl(it.key+'|tile',blob,true);
   }catch(e){return null}
 }
@@ -662,7 +690,7 @@ async function saveTileBlob(it,blob){
   if(!S.set.pcache||!DB||!blob)return null;
   try{
     await idbPut('tiles',it.key,{blob,ts:Date.now(),n:blob.size});
-    trimTiles();
+    if(!pc.active)trimTiles();
     return objUrl(it.key+'|tile',blob,true);
   }catch(e){return null}
 }
@@ -850,11 +878,13 @@ function mount(box,it,full){
     }
     try{
       await slot();
-      let res;try{res=await paint(it,edge,{cacheTile:true})}finally{free()}
+      fgBusy++;
+      let res;try{res=await paint(it,edge,{cacheTile:true})}finally{fgBusy--;free()}
       if(!alive())return;
       const c=res.canvas;
       it.err=null;it.painted=true;
       c.className='shot';
+      firstPaintDone=true;
       dims(c.width,c.height);                 // card is already the right shape when the pixels land
       put(c);
       // refresh the small tile for next time, and (in grids) swap the canvas for the
@@ -877,32 +907,50 @@ function mount(box,it,full){
   }
 }
 /* ---------- pre-cache every photo after a folder opens ---------- */
-const pc={active:false,done:0,total:0,ok:0,fail:0,cancel:false};
+const pc={active:false,done:0,total:0,ok:0,fail:0,cancel:false,t0:0,ms:0};
+let firstPaintDone=false;
 function pcUI(){
   const el=$('#pc');if(!el)return;
   el.classList.toggle('hide',!pc.active&&!pc.total);
   const bar=$('#pcbar i');if(bar)bar.style.width=(pc.total?Math.round(pc.done/pc.total*100):0)+'%';
   const lab=$('#pclab');
-  if(lab)lab.textContent=pc.active?('Caching '+pc.done+' of '+pc.total):(pc.ok?('Cached '+pc.ok+' tiles'):'');
+  if(lab){
+    let rate='';
+    if(pc.active&&pc.t0&&pc.done>1){const per=(Date.now()-pc.t0)/1000/pc.done;rate=' · '+(per>0?(1/per).toFixed(1):'0')+'/s'}
+    lab.textContent=pc.active?('Caching '+pc.done+' of '+pc.total+rate):(pc.ok?('Cached '+pc.ok+' tiles'+(pc.ms?' in '+(pc.ms/1000).toFixed(1)+'s':'')):'');
+  }
   const x=$('#pcx');if(x)x.style.display=pc.active?'inline-flex':'none';
 }
+// small files first, so the bar moves and the cheap ones are done early
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function precacheAll(){
   if(!S.set.precache||pc.active)return;
+  // let the photo on screen land first, then use the spare worker for the rest
+  const waitStart=Date.now();
+  while(!firstPaintDone&&Date.now()-waitStart<4000)await sleep(50);
   const queue=items.filter(i=>!i.vid);
-  pc.active=true;pc.cancel=false;pc.total=queue.length;pc.done=0;pc.ok=0;pc.fail=0;pcUI();
-  for(const it of queue){
-    if(pc.cancel)break;
-    try{
-      if(await isHeif(it)){
-        if(await tileUrl(it)){pc.ok++}
-        else if(await prefetchTile(it)){pc.ok++}
-        else{pc.fail++}
-      }
-    }catch(e){pc.fail++}
-    pc.done++;pcUI();
-    await new Promise(r=>setTimeout(r,10));
-  }
-  pc.active=false;pcUI();
+  pc.active=true;pc.cancel=false;pc.total=queue.length;pc.done=0;pc.ok=0;pc.fail=0;pc.t0=Date.now();pc.ms=0;pcUI();
+  const n=Math.max(1,Math.min(poolN(),queue.length));
+  let next=0;
+  const lane=async()=>{
+    while(!pc.cancel){
+      const it=queue[next++];
+      if(!it)return;
+      // never fight the photo the user is looking at
+      while(fgBusy>0&&!pc.cancel)await sleep(40);
+      if(pc.cancel)return;
+      try{
+        if(await isHeif(it)){
+          if(await tileUrl(it)){pc.ok++}
+          else if(await prefetchTile(it)){pc.ok++}
+          else{pc.fail++}
+        }
+      }catch(e){pc.fail++}
+      pc.done++;pcUI();
+    }
+  };
+  await Promise.all(Array.from({length:n},lane));
+  pc.active=false;pc.ms=Date.now()-pc.t0;trimTiles();pcUI();
   setTimeout(()=>{if(!pc.active){pc.total=0;pcUI()}},6000);
   if(pc.cancel)toast('Caching stopped at '+pc.done+' of '+pc.total);
   else toast('Cached '+pc.ok+' of '+pc.total+' photos for offline use');
@@ -918,8 +966,7 @@ async function prefetchTile(it){
   it.prefetching=(async()=>{
     try{
       if(!(await isHeif(it)))return null;
-      await slot();
-      let res;try{res=await paint(it,THUMB,{cacheTile:true})}finally{free()}
+      let res;try{res=await paint(it,THUMB,{cacheTile:true,tileOnly:true})}finally{}
       if(!res)return null;
       return res.tile?saveTileBlob(it,res.tile):saveTile(it,res.canvas);
     }catch(e){return null}
