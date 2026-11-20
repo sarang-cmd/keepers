@@ -11,6 +11,9 @@ no state outside `%APPDATA%\Keepers` and your tile cache in `%LOCALAPPDATA%\Keep
 Windows may show a SmartScreen warning the first time because the build is unsigned.
 More info, then Run anyway.
 
+The window is drawn with wgpu, so it goes through Direct3D 12 on Windows. Any machine that
+runs Windows 11 will run it, including over Remote Desktop.
+
 HEIC decoding comes from the HEIF Image Extension that ships with Windows, so there is no
 decoder to bundle and no 3 MB WASM download on first use. JPEG, PNG, WebP, BMP and TIFF go
 through the same Windows Imaging Component path.
@@ -54,9 +57,10 @@ The binary lands in `target/x86_64-pc-windows-msvc/release/keepers.exe`. Buildin
 itself needs nothing more than `cargo build --release`. On Linux or macOS the `cargo xwin`
 line cross compiles it, which is how the published binary was made.
 
-The other platforms build too: `cargo build --release` on Linux gives a working app with the
-`image` crate decoders, minus HEIC, because libheif is not linked in. macOS would need an
-ImageIO path, which is not written yet.
+The renderer is wgpu, which is why the build needs the `x11` and `wayland` features on Linux
+and none on Windows. The other platforms build too: `cargo build --release` on Linux gives a
+working app with the `image` crate decoders, minus HEIC, because libheif is not linked in.
+macOS would need an ImageIO path, which is not written yet.
 
 ## Tests
 

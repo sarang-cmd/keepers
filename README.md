@@ -17,7 +17,7 @@ Native build: [Keepers 1.0.0 for Windows](https://github.com/sarang-cmd/keepers/
 
 ## Desktop app
 
-The same app as a native binary. Rust, drawn with egui, one window, nothing to install.
+The same app as a native binary. Rust, drawn with egui over wgpu, one window, nothing to install.
 
 | Swipe | Grid |
 |---|---|
