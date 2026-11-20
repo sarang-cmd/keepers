@@ -9,6 +9,30 @@ Keepers is a single self-contained HTML file. Drop your trip's photos and videos
 
 Live copy: <https://keepers-inky.vercel.app>
 
+Native build: [Keepers 1.0.0 for Windows](https://github.com/sarang-cmd/keepers/releases/latest), a single 5 MB exe that sorts the same way without a browser.
+
+---
+
+---
+
+## Desktop app
+
+The same app as a native binary. Rust, drawn with egui, one window, nothing to install.
+
+| Swipe | Grid |
+|---|---|
+| ![Desktop swipe view](docs/desktop-swipe.jpg) | ![Desktop grid](docs/desktop-grid.jpg) |
+
+| Compare | Settings |
+|---|---|
+| ![Desktop compare](docs/desktop-compare.jpg) | ![Desktop settings](docs/desktop-settings.jpg) |
+
+- HEIC decodes through the Windows Imaging Component, so the HEIF extension already in Windows does the work. No WASM, no 3 MB download on first open.
+- The tile pass decodes on every core at once. 24 photos at 1600 px finish in 0.35 s on a 2 core box, warm from the disk cache in 0.01 s with the first tile at 8 ms.
+- Same collections, same keys, same sort map file. Export writes `keepers-sortmap.json` next to the photos, restore reads it back.
+- Binary: `keepers-1.0.0-windows-x64.zip` on the [releases page](https://github.com/sarang-cmd/keepers/releases/latest). Source lives in [`desktop/`](desktop).
+- Unsigned, so Windows shows a SmartScreen prompt once. More info, then Run anyway.
+
 ---
 
 ## Screenshots
