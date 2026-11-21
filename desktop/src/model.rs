@@ -120,7 +120,7 @@ fn d_theme() -> String {
     "dark".into()
 }
 fn d_thumb() -> u32 {
-    210
+    240
 }
 fn d_guides() -> String {
     "thirds".into()

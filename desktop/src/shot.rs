@@ -60,10 +60,28 @@ impl TexStore {
     }
 }
 
+impl TexStore {
+    pub fn tex_info(&self) -> Vec<(egui::TextureId, [usize; 2])> {
+        let mut v: Vec<_> = self.map.iter().map(|(k, i)| (*k, i.size)).collect();
+        v.sort_by_key(|(k, _)| format!("{:?}", k));
+        v
+    }
+}
+
 fn sample(tex: &egui::ColorImage, u: f32, v: f32) -> Color32 {
     if tex.size[0] == 0 || tex.size[1] == 0 {
         return Color32::WHITE;
     }
+    // uv inside 0..1 clamps, outside repeats, which covers tiled textures
+    let wrap = |t: f32| {
+        if (0.0..=1.0).contains(&t) {
+            t
+        } else {
+            t - t.floor()
+        }
+    };
+    let u = wrap(u);
+    let v = wrap(v);
     let x = (u * tex.size[0] as f32).clamp(0.0, tex.size[0] as f32 - 1.0);
     let y = (v * tex.size[1] as f32).clamp(0.0, tex.size[1] as f32 - 1.0);
     // bilinear
@@ -85,6 +103,35 @@ fn sample(tex: &egui::ColorImage, u: f32, v: f32) -> Color32 {
     let top = mix(p(x0, y0), p(x1, y0), fx);
     let bot = mix(p(x0, y1), p(x1, y1), fx);
     mix(top, bot, fy)
+}
+
+
+impl Shot {
+    pub fn hits(&self, x: f32, y: f32) -> Vec<String> {
+        let mut out = Vec::new();
+        for (i, prim) in self.prims.iter().enumerate() {
+            let egui::epaint::Primitive::Mesh(mesh) = &prim.primitive else { continue };
+            for tri in mesh.indices.chunks(3) {
+                if tri.len() < 3 { continue }
+                let v: Vec<_> = tri.iter().map(|k| mesh.vertices[*k as usize]).collect();
+                let (x0, y0) = (v[0].pos.x, v[0].pos.y);
+                let (x1, y1) = (v[1].pos.x, v[1].pos.y);
+                let (x2, y2) = (v[2].pos.x, v[2].pos.y);
+                let area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+                if area.abs() < 1e-6 { continue }
+                let w0 = ((x1 - x) * (y2 - y) - (x2 - x) * (y1 - y)) / area;
+                let w1 = ((x2 - x) * (y0 - y) - (x0 - x) * (y2 - y)) / area;
+                let w2 = 1.0 - w0 - w1;
+                if w0 < 0.0 || w1 < 0.0 || w2 < 0.0 { continue }
+                out.push(format!(
+                    "{} tex {:?} tri ({:.0},{:.0}) ({:.0},{:.0}) ({:.0},{:.0}) col {:?}",
+                    i, mesh.texture_id, x0, y0, x1, y1, x2, y2, v[0].color
+                ));
+                break;
+            }
+        }
+        out
+    }
 }
 
 /// Rasterize the frame into an RGB buffer.

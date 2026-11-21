@@ -26,7 +26,9 @@ The same app as a native binary. Rust, drawn with egui over wgpu, one window, no
 | Compare | Settings |
 |---|---|
 | ![Desktop compare](docs/desktop-compare.jpg) | ![Desktop settings](docs/desktop-settings.jpg) |
+| ![Desktop empty state](docs/desktop-empty.jpg) | |
 
+- The window is styled to match the web app: soft panels, a warm and cool page wash, a dot grid, Bricolage Grotesque headings and one accent gradient.
 - HEIC decodes through the Windows Imaging Component, so the HEIF extension already in Windows does the work. No WASM, no 3 MB download on first open.
 - The tile pass decodes on every core at once. 24 photos at 1600 px finish in 0.35 s on a 2 core box, warm from the disk cache in 0.01 s with the first tile at 8 ms.
 - Same collections, same keys, same sort map file. Export writes `keepers-sortmap.json` next to the photos, restore reads it back.

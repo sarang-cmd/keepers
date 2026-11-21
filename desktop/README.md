@@ -5,8 +5,9 @@ A native Rust build of Keepers. One window, one binary, no browser tab and no We
 ## Run it
 
 Download `keepers-1.0.0-windows-x64.zip` from the releases page, unpack it anywhere and run
-`keepers.exe`. Nothing to install. The binary is 5 MB, links the C runtime statically and keeps
-no state outside `%APPDATA%\Keepers` and your tile cache in `%LOCALAPPDATA%\Keepers`.
+`keepers.exe`. Nothing to install. The binary is under 10 MB, links the C runtime statically
+and keeps no state outside `%APPDATA%\Keepers` and your tile cache in
+`%LOCALAPPDATA%\Keepers`.
 
 Windows may show a SmartScreen warning the first time because the build is unsigned.
 More info, then Run anyway.
@@ -17,6 +18,12 @@ runs Windows 11 will run it, including over Remote Desktop.
 HEIC decoding comes from the HEIF Image Extension that ships with Windows, so there is no
 decoder to bundle and no 3 MB WASM download on first use. JPEG, PNG, WebP, BMP and TIFF go
 through the same Windows Imaging Component path.
+
+## How it looks
+
+The window follows the web app: soft panels on a warm and cool page wash, a faint dot grid,
+large headings in Bricolage Grotesque, one accent gradient and stack shadows instead of hard
+borders. Everything is vector drawn at the display scale, so it stays sharp on high DPI.
 
 ## What it does
 
@@ -30,6 +37,8 @@ through the same Windows Imaging Component path.
 - Every decision is saved as you go and can be exported to `keepers-sortmap.json` next to
   the photos, then restored on another machine.
 - Thumbnails are cached on disk, so a second open of the same folder paints from cache.
+- Light, dark or follow the system, with a thumbnail size slider, guide choice and preview
+  resolution in Settings.
 
 ## Keys
 
